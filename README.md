@@ -29,7 +29,7 @@ Some files have been excluded from this repository for security reasons:
 - `firebase_options.dart`
 
 
-### ⛷️ Real-world Results from FIS
+###  Real-world Results from FIS
 
 This app fetches real-time race results directly from the [FIS (International Ski Federation)](https://www.fis-ski.com/) website. A custom HTML parser scrapes each competition’s result page and extracts skier placements. These results are then written to Firebase, updating each skier’s performance for the current game week.
 
@@ -79,6 +79,34 @@ Despite this, the app provides a solid foundation and demonstrates:
 - Live points and leaderboard calculation
 - Dynamic team management
 - Responsive UI for mobile, tablet, and desktop
+
+##  Screenshots
+
+###  Login Screen
+Basic login interface using Firebase Authentication.
+
+![Login Screen](assets/screenshots/Sc_loginscreen.jpg)
+
+---
+
+###  Home Screen
+Main screen showing your selected fantasy team and current gameweek.
+
+![Home Screen](assets/screenshots/Sc_homescreen.jpg)
+
+---
+
+###  Choose Skiers
+The screen where users select 3 male and 3 female skiers to form their team.
+
+![Choose Skiers](assets/screenshots/Sc_chooseskier.jpg)
+
+---
+
+###  Alternate Home Layout
+Alternative home screen layout or view after selection.
+
+![Home Screen 2](assets/screenshots/Sc_homescreen2.jpg)
 
 ---
 
