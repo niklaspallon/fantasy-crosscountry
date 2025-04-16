@@ -103,8 +103,8 @@ The screen where users select 3 male and 3 female skiers to form their team.
 
 ---
 
-###  Alternate Home Layout
-Alternative home screen layout or view after selection.
+###  Home Layout
+Home screen layout after selection.
 
 ![Home Screen 2](assets/screenshots/Sc_homescreen2.jpg)
 
