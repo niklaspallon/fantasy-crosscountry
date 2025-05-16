@@ -1,0 +1,57 @@
+# 📦 OS-specifika filer
+.DS_Store
+*.swp
+*.log
+*.class
+*.pyc
+.history
+.svn/
+.env
+
+# 💻 Editorfiler
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.atom/
+.buildlog/
+
+# 🔧 Flutter/Dart-relaterat
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.pub-cache/
+build/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# 📱 Android build mappar
+android/.gradle/
+android/app/build/
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# 🧪 iOS/macOS build mappar
+ios/Pods/
+ios/Flutter/
+macos/Flutter/
+linux/flutter/
+windows/flutter/
+
+# 🛡️ Firebase – exkludera känsliga filer
+firebase_options.dart
+.firebase/
+.firebaserc
+firebase.json
+hosting.*
+
+# 🧩 Obfuscation & symbolication
+app.*.symbols
+app.*.map.json
+
+# 🛠 Migration leftovers
+migrate_working_dir/
