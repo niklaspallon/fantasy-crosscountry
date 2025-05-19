@@ -121,7 +121,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
           },
         ),
       ],
-      viewBackgroundColor: Colors.blueGrey[900],
+      viewBackgroundColor: const Color(0xFF1A237E),
       viewElevation: 10,
       viewShape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
@@ -130,8 +130,26 @@ class _ChooseSkierScreen extends State<SkierScreen> {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.white24),
-            borderRadius: BorderRadius.circular(10),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF1A237E).withOpacity(0.9),
+                Colors.blue[900]!.withOpacity(0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -160,6 +178,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
@@ -203,6 +222,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       tileColor: Colors.transparent,
@@ -227,8 +247,26 @@ class _ChooseSkierScreen extends State<SkierScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white24),
-        borderRadius: BorderRadius.circular(10),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1A237E).withOpacity(0.9),
+            Colors.blue[900]!.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -241,9 +279,9 @@ class _ChooseSkierScreen extends State<SkierScreen> {
           Expanded(
             child: Theme(
               data: Theme.of(context).copyWith(
-                canvasColor: Colors.blueGrey[900],
+                canvasColor: const Color(0xFF1A237E),
                 popupMenuTheme: PopupMenuThemeData(
-                  color: Colors.blueGrey[900],
+                  color: const Color(0xFF1A237E),
                   elevation: 8,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
@@ -292,6 +330,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ],
@@ -309,6 +348,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       const Icon(
@@ -330,8 +370,26 @@ class _ChooseSkierScreen extends State<SkierScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white24),
-        borderRadius: BorderRadius.circular(10),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1A237E).withOpacity(0.9),
+            Colors.blue[900]!.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -343,9 +401,9 @@ class _ChooseSkierScreen extends State<SkierScreen> {
           const SizedBox(width: 8),
           Theme(
             data: Theme.of(context).copyWith(
-              canvasColor: Colors.blueGrey[900],
+              canvasColor: const Color(0xFF1A237E),
               popupMenuTheme: PopupMenuThemeData(
-                color: Colors.blueGrey[900],
+                color: const Color(0xFF1A237E),
                 elevation: 8,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -384,6 +442,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ],
@@ -401,6 +460,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
+                        letterSpacing: 0.5,
                       ),
                     ),
                     const Icon(
@@ -425,9 +485,17 @@ class _ChooseSkierScreen extends State<SkierScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text('Choose Skiers', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blueGrey[900],
+        title: const Text(
+          'Choose Skiers',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        backgroundColor: const Color(0xFF1A237E),
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -436,17 +504,37 @@ class _ChooseSkierScreen extends State<SkierScreen> {
         ),
       ),
       body: Container(
-        color: Colors.blueGrey[800],
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFF1A237E),
+              Colors.blue[900]!,
+            ],
+          ),
+        ),
         child: Column(
           children: [
             Container(
               margin: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: Colors.blueGrey[900],
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1A237E).withOpacity(0.9),
+                    Colors.blue[900]!.withOpacity(0.8),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -482,10 +570,30 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: unlimitedTransfers
-                                      ? Colors.green[700]
-                                      : Colors.amber[700],
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      unlimitedTransfers
+                                          ? Colors.green[600]!
+                                          : Colors.amber[600]!,
+                                      unlimitedTransfers
+                                          ? Colors.green[900]!
+                                          : Colors.amber[900]!,
+                                    ],
+                                  ),
                                   borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -502,6 +610,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                   ],
@@ -539,10 +648,30 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 12, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: unlimitedTransfers
-                                          ? Colors.green[700]
-                                          : Colors.amber[700],
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          unlimitedTransfers
+                                              ? Colors.green[600]!
+                                              : Colors.amber[600]!,
+                                          unlimitedTransfers
+                                              ? Colors.green[900]!
+                                              : Colors.amber[900]!,
+                                        ],
+                                      ),
                                       borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.2),
+                                        width: 1,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -559,6 +688,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 14,
+                                            letterSpacing: 0.5,
                                           ),
                                         ),
                                       ],
@@ -599,10 +729,30 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: unlimitedTransfers
-                                      ? Colors.green[700]
-                                      : Colors.amber[700],
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      unlimitedTransfers
+                                          ? Colors.green[600]!
+                                          : Colors.amber[600]!,
+                                      unlimitedTransfers
+                                          ? Colors.green[900]!
+                                          : Colors.amber[900]!,
+                                    ],
+                                  ),
                                   borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -623,6 +773,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: 12,
+                                            letterSpacing: 0.5,
                                           ),
                                         ),
                                         Text(
@@ -633,6 +784,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16,
+                                            letterSpacing: 0.5,
                                           ),
                                         ),
                                       ],
@@ -649,7 +801,11 @@ class _ChooseSkierScreen extends State<SkierScreen> {
               child: Consumer<SkiersProvider>(
                 builder: (context, skiersProvider, child) {
                   if (skiersProvider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    );
                   }
 
                   final filteredSkiers =
@@ -675,8 +831,26 @@ class _ChooseSkierScreen extends State<SkierScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white24),
-        borderRadius: BorderRadius.circular(10),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1A237E).withOpacity(0.9),
+            Colors.blue[900]!.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: InkWell(
         onTap: () {
@@ -684,7 +858,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
             sortAscending = !sortAscending;
           });
         },
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: Row(
           children: [
             Icon(
@@ -698,6 +872,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 14,
+                letterSpacing: 0.5,
               ),
             ),
           ],
@@ -710,8 +885,26 @@ class _ChooseSkierScreen extends State<SkierScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white24),
-        borderRadius: BorderRadius.circular(10),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1A237E).withOpacity(0.9),
+            Colors.blue[900]!.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: InkWell(
         onTap: () {
@@ -722,7 +915,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
             sortAscending = false;
           });
         },
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: const Row(
           children: [
             Icon(
@@ -736,6 +929,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 14,
+                letterSpacing: 0.5,
               ),
             ),
           ],

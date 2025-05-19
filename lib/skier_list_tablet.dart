@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'teamProvider.dart';
 import 'flags.dart';
+import 'alertdialog_skier.dart';
 
 class SkierListTablet extends StatelessWidget {
   final List<Map<String, dynamic>> skiers;
@@ -27,17 +28,43 @@ class SkierListTablet extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  "Men",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF1A237E).withOpacity(0.9),
+                      Colors.blue[900]!.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    "Men",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
               Expanded(child: _buildSkierList(context, maleSkiers)),
             ],
           ),
@@ -51,17 +78,43 @@ class SkierListTablet extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  "Women",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF1A237E).withOpacity(0.9),
+                      Colors.blue[900]!.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    "Women",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
               Expanded(child: _buildSkierList(context, femaleSkiers)),
             ],
           ),
@@ -86,13 +139,28 @@ class SkierListTablet extends StatelessWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            color: alreadyAdded ? Colors.grey[800] : Colors.blueGrey[900],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                alreadyAdded
+                    ? Colors.grey[800]!.withOpacity(0.9)
+                    : const Color(0xFF1A237E).withOpacity(0.9),
+                alreadyAdded
+                    ? Colors.grey[900]!.withOpacity(0.8)
+                    : Colors.blue[900]!.withOpacity(0.8),
+              ],
+            ),
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -105,10 +173,15 @@ class SkierListTablet extends StatelessWidget {
                 width: 45,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.2),
                       blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -123,6 +196,7 @@ class SkierListTablet extends StatelessWidget {
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
               subtitle: Text(
@@ -130,6 +204,7 @@ class SkierListTablet extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.grey[400],
                   fontSize: 12,
+                  letterSpacing: 0.5,
                 ),
               ),
               trailing: Row(
@@ -141,44 +216,71 @@ class SkierListTablet extends StatelessWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color:
-                          alreadyAdded ? Colors.grey[700] : Colors.amber[700],
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          alreadyAdded ? Colors.grey[700]! : Colors.amber[700]!,
+                          alreadyAdded ? Colors.grey[800]! : Colors.amber[800]!,
+                        ],
+                      ),
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.2),
+                        width: 1,
+                      ),
                     ),
                     child: Text(
-                      "${skierData['price']}",
+                      "${skierData['price']} M",
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
                   const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: alreadyAdded
-                        ? () {
-                            context
-                                .read<TeamProvider>()
-                                .removeSkierFromTeam(skierId, context);
-                          }
-                        : () {
-                            context
-                                .read<TeamProvider>()
-                                .addSkierToTeam(skierId, context);
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: alreadyAdded ? Colors.red : Colors.green,
-                      padding: const EdgeInsets.all(8),
-                      minimumSize: const Size(40, 40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          alreadyAdded ? Colors.red[600]! : Colors.green[600]!,
+                          alreadyAdded ? Colors.red[900]! : Colors.green[900]!,
+                        ],
                       ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.2),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: Icon(
-                      alreadyAdded ? Icons.remove : Icons.add,
-                      color: Colors.white,
-                      size: 24,
+                    child: IconButton(
+                      onPressed: alreadyAdded
+                          ? () {
+                              context
+                                  .read<TeamProvider>()
+                                  .removeSkierFromTeam(skierId, context);
+                            }
+                          : () {
+                              context
+                                  .read<TeamProvider>()
+                                  .addSkierToTeam(skierId, context);
+                            },
+                      icon: Icon(
+                        alreadyAdded ? Icons.remove : Icons.add,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ],

@@ -392,6 +392,33 @@ class TeamProvider extends ChangeNotifier {
         return;
       }
 
+      // Om åkaren är kapten, ta bort kaptenstatus
+      if (skierId == _captain) {
+        _captain = "";
+        print("kapten borttagen");
+
+        // Uppdatera kapten i Firebase
+        FirebaseFirestore db = FirebaseFirestore.instance;
+        QuerySnapshot teamSnapshot = await db
+            .collection('teams')
+            .where('ownerId', isEqualTo: ownerId)
+            .get();
+
+        if (teamSnapshot.docs.isNotEmpty) {
+          String teamId = teamSnapshot.docs.first.id;
+          await db
+              .collection('teams')
+              .doc(teamId)
+              .collection('weeklyTeams')
+              .doc("week$_currentWeek")
+              .update({
+            'captain': null,
+          });
+        } else {
+          print("inga kaptener i laget");
+        }
+      }
+
       // Ta bort åkaren
       _userTeam.removeAt(skierIndex);
       print("✅ Åkare $skierId borttagen från det lokala laget!");
@@ -409,6 +436,7 @@ class TeamProvider extends ChangeNotifier {
   Future<bool> addSkierToTeam(String skierId, BuildContext context) async {
     List<Map<String, dynamic>> locSkiers =
         context.read<SkiersProvider>().locSkiers;
+    print("addskier to team kördes");
 
     try {
       // Trigger feedback if context is valid
@@ -583,7 +611,8 @@ class TeamProvider extends ChangeNotifier {
           'country': skier['country'],
           'totalWeeklyPoints': skier['points'],
           'isCaptain': skier['id'] == _captain,
-          'price': skier['price'] ?? 0, // ✅ Lägg till priset här
+          'price': skier['price'] ?? 0,
+          'gender': skier['gender'],
         };
       }).toList();
 
