@@ -56,6 +56,12 @@ class TeamProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _userTeam = [];
   List<Map<String, dynamic>> get userTeam => _userTeam;
 
+  List<Map<String, dynamic>> _lastSavedTeam = [];
+  List<Map<String, dynamic>> get lastSavedTeam => _lastSavedTeam;
+
+  bool _hasTeamChanged = false;
+  bool get hasTeamChanged => _hasTeamChanged;
+
   bool _hasFetchedTeamName =
       false; // Flagga för att kolla om vi redan har hämtat teamName
 
@@ -95,6 +101,9 @@ class TeamProvider extends ChangeNotifier {
   bool _isFullTeam = false;
   bool get isFullTeam => _isFullTeam;
 
+  List<String> _upcomingEvents = [];
+  List<String> get upcomingEvents => _upcomingEvents;
+
   TeamProvider() {
     fetchWeekData();
 
@@ -104,6 +113,7 @@ class TeamProvider extends ChangeNotifier {
     getUserTeam();
     getRemainingBudget();
     getTeamTotalPoints();
+    updateUpcomingEvents();
   }
 
   void setLocalCaptain(skierId) {
@@ -236,6 +246,7 @@ class TeamProvider extends ChangeNotifier {
 
       if (teamSnapshot.docs.isEmpty) {
         _userTeam = [];
+        _lastSavedTeam = [];
         _weekPoints = 0;
         _captain = "";
         notifyListeners();
@@ -254,6 +265,7 @@ class TeamProvider extends ChangeNotifier {
 
       if (!weeklyTeamDoc.exists) {
         _userTeam = [];
+        _lastSavedTeam = [];
         _weekPoints = 0;
         _captain = "";
         notifyListeners();
@@ -269,6 +281,7 @@ class TeamProvider extends ChangeNotifier {
       List<dynamic> skierRawList = data['skiers'] ?? [];
       if (skierRawList.isEmpty) {
         _userTeam = [];
+        _lastSavedTeam = [];
         _weekPoints = 0;
         notifyListeners();
         return;
@@ -299,6 +312,7 @@ class TeamProvider extends ChangeNotifier {
       }
 
       _userTeam = fetchedTeam;
+      _lastSavedTeam = fetchedTeam;
       _weekPoints = totalPoints;
 
       print("✅ Lag för vecka $_currentWeek hämtat med poäng: $_weekPoints");
@@ -374,6 +388,27 @@ class TeamProvider extends ChangeNotifier {
     }
   }
 
+  void _checkTeamChanges() {
+    if (_userTeam.length != _lastSavedTeam.length) {
+      _hasTeamChanged = true;
+      notifyListeners();
+      return;
+    }
+
+    // Skapa set av åkare-IDs för båda lagen
+    Set<String> currentTeamIds =
+        _userTeam.map((skier) => skier['id'] as String).toSet();
+    Set<String> savedTeamIds =
+        _lastSavedTeam.map((skier) => skier['id'] as String).toSet();
+
+    // Om seten inte är identiska, har laget ändrats
+    if (currentTeamIds.difference(savedTeamIds).isNotEmpty ||
+        savedTeamIds.difference(currentTeamIds).isNotEmpty) {
+      _hasTeamChanged = true;
+      notifyListeners();
+    }
+  }
+
   Future<void> removeSkierFromTeam(String skierId, BuildContext context) async {
     try {
       // 🚫 Kontrollera om deadline har passerat
@@ -425,6 +460,9 @@ class TeamProvider extends ChangeNotifier {
 
       // Uppdatera budgeten lokalt
       getRemainingBudget();
+
+      // Kontrollera om laget har ändrats
+      _checkTeamChanges();
 
       // Uppdatera UI
       notifyListeners();
@@ -526,6 +564,9 @@ class TeamProvider extends ChangeNotifier {
       // 🔹 Uppdatera budgeten lokalt
       _totalBudget -= skierPrice;
       print("Ny budget: $_totalBudget");
+
+      // Kontrollera om laget har ändrats
+      _checkTeamChanges();
 
       // 🔹 Uppdatera UI
       notifyListeners();
@@ -635,6 +676,11 @@ class TeamProvider extends ChangeNotifier {
         print(isFullTeam);
       }
 
+      // Uppdatera lastSavedTeam och återställ hasTeamChanged
+      _lastSavedTeam = List.from(_userTeam);
+      _hasTeamChanged = false;
+      notifyListeners();
+
       showSuccessDialog(
           context, "✅ Lag sparat!", "Ditt lag har sparats för $_currentWeek");
 
@@ -642,5 +688,11 @@ class TeamProvider extends ChangeNotifier {
     } catch (e) {
       showAlertDialog(context, "❌ Fel vid sparande av lag!", "$e");
     }
+  }
+
+  Future<void> updateUpcomingEvents() async {
+    _upcomingEvents = await fetchUpcomingEvents();
+    notifyListeners();
+    print("upcoming events fetched");
   }
 }

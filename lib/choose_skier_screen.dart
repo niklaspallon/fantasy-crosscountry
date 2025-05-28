@@ -18,6 +18,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
   String genderFilter = "All";
   bool sortAscending = false;
   String selectedPriceRange = "All";
+  final TextEditingController _searchController = TextEditingController();
 
   final List<String> countries = [
     "All",
@@ -46,9 +47,28 @@ class _ChooseSkierScreen extends State<SkierScreen> {
     context.read<TeamProvider>().fetchFreeTransfers();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {});
+  }
+
   List<Map<String, dynamic>> filterAndSortSkiers(
       List<Map<String, dynamic>> skiers) {
     var filteredSkiers = skiers;
+
+    // Filtrera efter söktext
+    if (_searchController.text.isNotEmpty) {
+      final searchText = _searchController.text.toLowerCase();
+      filteredSkiers = filteredSkiers.where((skier) {
+        final name = skier['name']?.toString().toLowerCase() ?? '';
+        return name.contains(searchText);
+      }).toList();
+    }
 
     // Filtrera efter land
     if (selectedCountry != "All") {
@@ -240,6 +260,54 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                 ))
             .toList();
       },
+    );
+  }
+
+  Widget _buildShowBudget(BuildContext context) {
+    return Container(
+      height: 50,
+      width: 100,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1A237E).withOpacity(0.9),
+            Colors.blue[900]!.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.euro,
+            color: Colors.white70,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            "${context.read<TeamProvider>().totalBudget}M",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -551,16 +619,30 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                               Expanded(
                                 child: _buildCountrySearch(context),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 2),
+                              Expanded(
+                                child: SearchSkierWidget(
+                                  searchController: _searchController,
+                                  onSearchChanged: _onSearchChanged,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              const SizedBox(width: 2),
+                              Expanded(child: _buildShowBudget(context)),
+                              const SizedBox(width: 2),
                               Expanded(
                                 child: _buildGenderFilter(context),
                               ),
+                              const SizedBox(width: 2),
                               Expanded(
                                 child: _buildPriceFilter(context),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 2),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -627,6 +709,13 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                 children: [
                                   Expanded(
                                     child: _buildCountrySearch(context),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: SearchSkierWidget(
+                                      searchController: _searchController,
+                                      onSearchChanged: _onSearchChanged,
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
@@ -706,6 +795,13 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                   children: [
                                     Expanded(
                                       child: _buildCountrySearch(context),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: SearchSkierWidget(
+                                        searchController: _searchController,
+                                        onSearchChanged: _onSearchChanged,
+                                      ),
                                     ),
                                     const SizedBox(width: 16),
                                     SizedBox(
@@ -913,6 +1009,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
             genderFilter = "All";
             selectedPriceRange = "All";
             sortAscending = false;
+            _searchController.clear();
           });
         },
         borderRadius: BorderRadius.circular(12),
@@ -933,6 +1030,58 @@ class _ChooseSkierScreen extends State<SkierScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class SearchSkierWidget extends StatelessWidget {
+  final TextEditingController searchController;
+  final Function(String) onSearchChanged;
+
+  const SearchSkierWidget({
+    Key? key,
+    required this.searchController,
+    required this.onSearchChanged,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1A237E).withOpacity(0.9),
+            Colors.blue[900]!.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: searchController,
+        onChanged: onSearchChanged,
+        style: const TextStyle(color: Colors.white),
+        decoration: const InputDecoration(
+          hintText: 'Search skier...',
+          hintStyle: TextStyle(color: Colors.white),
+          prefixIcon: Icon(Icons.search, color: Colors.white70),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 8),
         ),
       ),
     );

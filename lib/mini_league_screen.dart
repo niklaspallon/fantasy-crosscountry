@@ -2,167 +2,378 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:real_fls/mini_league_details_screen.dart';
-
+import 'package:flutter/services.dart';
 import 'teamProvider.dart';
 import 'mini_league_handler.dart';
 import 'button_design.dart';
-import 'main.dart'; // för leaderboardWidget
+import 'main.dart';
 
-class MiniLeagueScreen extends StatefulWidget {
+class MiniLeagueScreen extends StatelessWidget {
   const MiniLeagueScreen({super.key});
 
   @override
-  State<MiniLeagueScreen> createState() => _MiniLeagueScreenState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          JoinLeague(),
+          CreateMiniLeague(),
+          JoinedLeagues(),
+        ],
+      ),
+    );
+  }
 }
 
-class _MiniLeagueScreenState extends State<MiniLeagueScreen> {
-  final TextEditingController leagueNameController = TextEditingController();
-  bool _isLoading = false;
-  List<Map<String, dynamic>> _leagues = [];
+class JoinLeague extends StatelessWidget {
+  final TextEditingController controller = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    fetchLeagues();
-  }
-
-  Future<void> fetchLeagues() async {
-    final userId = context.read<TeamProvider>().ownerId;
-    final leagues = await getLeaguesForUser(userId);
-    setState(() {
-      _leagues = leagues;
-    });
-  }
-
-  Future<void> handleCreateLeague() async {
-    final name = leagueNameController.text.trim();
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("❗ Ange ett namn för ligan")),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    final created = await createMiniLeagueWithAutoCode(
-      leagueName: name,
-      createdByUid: FirebaseAuth.instance.currentUser!.uid,
-      createdAt: DateTime.now(),
-    );
-
-    if (created) {
-      leagueNameController.clear();
-      await fetchLeagues(); // Uppdatera UI med nya ligan
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("✅ '$name' skapades!")),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("❌ Misslyckades att skapa liga")),
-      );
-    }
-
-    setState(() => _isLoading = false);
-  }
+  JoinLeague({super.key});
 
   @override
   Widget build(BuildContext context) {
-    String code = "";
+    final String userId = context.read<TeamProvider>().ownerId;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Miniligor"),
-        backgroundColor: Colors.lightBlue,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1A237E).withOpacity(0.9),
+            Colors.blue[900]!.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
       ),
-      body: Stack(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage("bilder/backgrund.jpg"),
-                fit: BoxFit.cover,
+          const Text(
+            "Join League",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: "Enter league code",
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.1),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                  color: Colors.white.withOpacity(0.2),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                  color: Colors.white.withOpacity(0.2),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: Colors.amber,
+                  width: 2,
+                ),
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  leaderboardWidget(context),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Skapa en ny miniliga",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: leagueNameController,
-                    decoration: const InputDecoration(
-                      labelText: "Ligans namn",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : HoverButton(
-                          onPressed: handleCreateLeague,
-                          backgroundColor: Colors.green,
-                          text: "Skapa Miniliga",
-                        ),
-                  const SizedBox(height: 30),
-                  const Text(
-                    "Dina miniligor",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  ..._leagues.map((league) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 16, horizontal: 12),
-                          backgroundColor: Colors.lightBlue,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => MiniLeagueDetailScreen(
-                                code: league['code'], // eller doc.id
-                                leagueName: league['name'], // namn
-                              ),
-                            ),
-                          );
-                          print(league['id']);
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              league['name'],
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text("${league['teamsCount']} lag"),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ],
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                joinMiniLeague(leagueCode: controller.text, userId: userId);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                "Join League with code",
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class CreateMiniLeague extends StatelessWidget {
+  CreateMiniLeague({super.key});
+  final TextEditingController _leagueNameController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF1A237E), Color(0xFF1B263B)],
+        ),
+      ),
+      child: Column(
+        children: [
+          // Create League Section
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1A237E).withOpacity(0.9),
+                  Colors.blue[900]!.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Create New League",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _leagueNameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: "Enter league name",
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: Colors.amber,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      createLeague(
+                        leagueName: _leagueNameController.text,
+                        userId: context.read<TeamProvider>().ownerId,
+                        context: context,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      "CREATE LEAGUE",
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class JoinedLeagues extends StatefulWidget {
+  const JoinedLeagues({super.key});
+
+  @override
+  State<JoinedLeagues> createState() => _JoinedLeaguesState();
+}
+
+class _JoinedLeaguesState extends State<JoinedLeagues> {
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: fetchJoinedLeagues(context.read<TeamProvider>().ownerId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Error loading leagues: ${snapshot.error}',
+                style: const TextStyle(color: Colors.white),
+              ),
+            );
+          }
+
+          final leagues = snapshot.data ?? [];
+
+          if (leagues.isEmpty) {
+            return const Center(
+              child: Text(
+                'You are not part of any leagues yet.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: leagues.length,
+            itemBuilder: (context, index) {
+              final league = leagues[index];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF1A237E).withOpacity(0.9),
+                      Colors.blue[900]!.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  title: Text(
+                    league['name'] ?? "Unknown League",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${league['teamsCount']} teams",
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 14,
+                    ),
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.amber.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Text(
+                      league['code'] ?? "",
+                      style: const TextStyle(
+                        color: Colors.amber,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MiniLeagueDetailScreen(
+                          code: league['code'],
+                          leagueName: league['name'],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

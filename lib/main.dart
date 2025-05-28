@@ -107,8 +107,29 @@ class MyHome extends StatelessWidget {
 Widget skierContainer(BuildContext context, int index, double contSize,
     double nameSize, double countrySize, double priceSize) {
   final userTeam = context.watch<TeamProvider>().userTeam;
-  final bool hasPlayer = index < userTeam.length;
-  final skierId = hasPlayer ? userTeam[index]['id'] : null;
+
+  if (userTeam.isNotEmpty) {}
+
+  // Filtrera åkare baserat på gender (uppdaterad logik)
+  final femaleSkiers = userTeam
+      .where((skier) =>
+          skier['gender']?.toString().toLowerCase() == 'female' ||
+          skier['gender']?.toString().toLowerCase() == 'kvinna')
+      .toList();
+
+  final maleSkiers = userTeam
+      .where((skier) =>
+          skier['gender']?.toString().toLowerCase() == 'male' ||
+          skier['gender']?.toString().toLowerCase() == 'man')
+      .toList();
+
+  // Välj rätt lista och index baserat på position
+  final List<Map<String, dynamic>> filteredTeam =
+      index < 3 ? femaleSkiers : maleSkiers;
+  final int adjustedIndex = index < 3 ? index : index - 3;
+
+  final bool hasPlayer = adjustedIndex < filteredTeam.length;
+  final skierId = hasPlayer ? filteredTeam[adjustedIndex]['id'] : null;
   String captainId = context.watch<TeamProvider>().captain;
 
   return Padding(
@@ -165,7 +186,8 @@ Widget skierContainer(BuildContext context, int index, double contSize,
                           child: Stack(
                             children: [
                               Positioned.fill(
-                                child: flagWidget(userTeam[index]["country"]),
+                                child: flagWidget(
+                                    filteredTeam[adjustedIndex]["country"]),
                               ),
                               Container(
                                 decoration: BoxDecoration(
@@ -305,7 +327,10 @@ Widget skierContainer(BuildContext context, int index, double contSize,
                   children: [
                     if (hasPlayer) ...[
                       AutoSizeText(
-                        userTeam[index]["name"].split(" ").first.toUpperCase(),
+                        filteredTeam[adjustedIndex]["name"]
+                            .split(" ")
+                            .first
+                            .toUpperCase(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
@@ -319,7 +344,7 @@ Widget skierContainer(BuildContext context, int index, double contSize,
                       ),
                       const SizedBox(height: 2),
                       AutoSizeText(
-                        userTeam[index]["country"].toUpperCase(),
+                        filteredTeam[adjustedIndex]["country"].toUpperCase(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
@@ -351,7 +376,7 @@ Widget skierContainer(BuildContext context, int index, double contSize,
                           ],
                         ),
                         child: Text(
-                          "${userTeam[index]["price"]}M",
+                          "${filteredTeam[adjustedIndex]["price"]}M",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: priceSize,
@@ -509,29 +534,62 @@ Widget leaderboardWidget(BuildContext context) {
 
 Widget saveTeam(BuildContext context) {
   String captain = context.watch<TeamProvider>().captain;
-  return Padding(
-    padding: const EdgeInsets.all(4.0),
-    child: HoverButton(
-      onPressed: () {
-        if (captain.isEmpty) {
-          showAlertDialog(context, "Ingen kapten vald",
-              "Du måste väja en kapten för att spara lag");
-        } else {
-          context.read<TeamProvider>().saveTeamToFirebase(context);
-        }
-      },
-      backgroundColor: const Color(0xFF1A237E),
-      child: const Text(
-        "Spara Lag",
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
-        ),
-      ),
-    ),
-  );
+  DateTime? deadline = context.watch<TeamProvider>().weekDeadline;
+  bool hasDeadlinePassed = false;
+  bool hasTeamChanged = context.watch<TeamProvider>().hasTeamChanged;
+
+  if (deadline != null) {
+    if (deadline.isBefore(DateTime.now())) {
+      hasDeadlinePassed = true;
+    }
+  }
+
+  return hasDeadlinePassed
+      ? Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Container(
+            height: 50,
+            width: 150,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A237E),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Text(
+                "Deadline passed",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+        )
+      : Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: HoverButton(
+            onPressed: () {
+              if (captain.isEmpty) {
+                showAlertDialog(context, "Ingen kapten vald",
+                    "Du måste väja en kapten för att spara lag");
+              } else {
+                context.read<TeamProvider>().saveTeamToFirebase(context);
+              }
+            },
+            backgroundColor: const Color(0xFF1A237E),
+            child: Text(
+              hasTeamChanged ? "Team changed" : "Spara Lag",
+              style: TextStyle(
+                color: hasTeamChanged ? Colors.red : Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        );
 }
 
 Widget logoutWidget(BuildContext context) {
@@ -613,6 +671,81 @@ Widget weekPoints(BuildContext context) {
           ),
         ],
       ),
+    ),
+  );
+}
+
+Widget showUpcomingEvents(BuildContext context) {
+  List<String> upcomingEvents = context.watch<TeamProvider>().upcomingEvents;
+  int currentWeek = context.watch<TeamProvider>().currentWeek;
+  return Container(
+    height: 200,
+    width: 500, // Fixed height for the container
+    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Color(0xFF1A237E).withOpacity(0.9),
+          Color(0xFF1A237E).withOpacity(0.7),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.2),
+          blurRadius: 8,
+          offset: Offset(0, 4),
+        ),
+      ],
+      border: Border.all(
+        color: Colors.white.withOpacity(0.1),
+        width: 1,
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.all(12),
+          child: Text(
+            'Competitions GW $currentWeek',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            itemCount: upcomingEvents.length,
+            itemBuilder: (context, index) => Container(
+              margin: EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                upcomingEvents[index],
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     ),
   );
 }

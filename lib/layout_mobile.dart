@@ -197,7 +197,12 @@ class LayoutMobile extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 3),
-                      saveTeam(context),
+                      Container(
+                        height: 50,
+                        width: 150,
+                        child: saveTeam(context),
+                      ),
+                      showUpcomingEvents(context),
                     ],
                   ),
                 ),

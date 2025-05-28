@@ -4,6 +4,7 @@ import 'loginScreen.dart';
 import 'leaderboard_screen.dart';
 import 'adminScreen.dart';
 import 'button_design.dart';
+import 'mini_league_screen.dart';
 
 class LayoutDesktop extends StatelessWidget {
   final String teamName;
@@ -128,7 +129,12 @@ class LayoutDesktop extends StatelessWidget {
                     HoverButton(
                       text: "Mini Leagues",
                       onPressed: () {
-                        // 👷 Kommer snart...
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MiniLeagueScreen(),
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(width: 8),
@@ -179,6 +185,7 @@ class LayoutDesktop extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 3),
+                      showUpcomingEvents(context),
                     ],
                   ),
                 ),

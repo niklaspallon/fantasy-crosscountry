@@ -47,7 +47,7 @@ class LeaderboardScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("bilder/backgrund.jpg"),
+            image: AssetImage("assets/backgrund.jpg"),
             fit: BoxFit.cover,
           ),
         ),

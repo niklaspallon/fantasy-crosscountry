@@ -327,41 +327,58 @@ void showQuickActionOverlay(
                     top: deleteY,
                     child: Transform.scale(
                       scale: value,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.red[600]!,
-                              Colors.red[900]!,
-                            ],
-                          ),
-                          border: Border.all(
-                              color: Colors.white.withOpacity(0.2), width: 1),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: HoverButton(
-                          onPressed: () {
-                            entry.remove();
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              outerContext
-                                  .read<TeamProvider>()
-                                  .removeSkierFromTeam(skierId, outerContext);
-                            });
-                          },
-                          shape: const CircleBorder(),
-                          size: const Size(30, 30),
-                          child: const Icon(Icons.delete,
-                              size: 18, color: Colors.white),
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          DateTime? deadline =
+                              context.watch<TeamProvider>().weekDeadline;
+                          bool hasDeadlinePassed = false;
+                          if (deadline != null) {
+                            hasDeadlinePassed =
+                                deadline.isBefore(DateTime.now());
+                          }
+
+                          return hasDeadlinePassed
+                              ? const SizedBox() // Return empty widget if deadline passed
+                              : Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Colors.red[600]!,
+                                        Colors.red[900]!,
+                                      ],
+                                    ),
+                                    border: Border.all(
+                                        color: Colors.white.withOpacity(0.2),
+                                        width: 1),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: HoverButton(
+                                    onPressed: () {
+                                      entry.remove();
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        outerContext
+                                            .read<TeamProvider>()
+                                            .removeSkierFromTeam(
+                                                skierId, outerContext);
+                                      });
+                                    },
+                                    shape: const CircleBorder(),
+                                    size: const Size(30, 30),
+                                    child: const Icon(Icons.delete,
+                                        size: 18, color: Colors.white),
+                                  ),
+                                );
+                        },
                       ),
                     ),
                   ),
@@ -372,57 +389,78 @@ void showQuickActionOverlay(
                     top: captainY,
                     child: Transform.scale(
                       scale: value,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFFFFD700), // Ljusare guld
-                              Color(0xFFFFA000), // Mörkare orange/guld
-                            ],
-                          ),
-                          border: Border.all(
-                              color: Colors.white.withOpacity(0.2), width: 1),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: HoverButton(
-                          onPressed: () {
-                            entry.remove();
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              final isCaptain =
-                                  outerContext.read<TeamProvider>().captain ==
-                                      skierId;
-                              outerContext
-                                  .read<TeamProvider>()
-                                  .setLocalCaptain(isCaptain ? "" : skierId);
-                            });
-                          },
-                          shape: const CircleBorder(),
-                          size: const Size(30, 30),
-                          child: Center(
-                            child: Text(
-                              outerContext.read<TeamProvider>().captain ==
-                                      skierId
-                                  ? "X"
-                                  : "C",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                height: 1,
-                              ),
-                            ),
-                          ),
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          DateTime? deadline =
+                              context.watch<TeamProvider>().weekDeadline;
+                          bool hasDeadlinePassed = false;
+                          if (deadline != null) {
+                            hasDeadlinePassed =
+                                deadline.isBefore(DateTime.now());
+                          }
+
+                          return hasDeadlinePassed
+                              ? const SizedBox() // Return empty widget if deadline passed
+                              : Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFFFFD700), // Ljusare guld
+                                        Color(
+                                            0xFFFFA000), // Mörkare orange/guld
+                                      ],
+                                    ),
+                                    border: Border.all(
+                                        color: Colors.white.withOpacity(0.2),
+                                        width: 1),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: HoverButton(
+                                    onPressed: () {
+                                      entry.remove();
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        final isCaptain = outerContext
+                                                .read<TeamProvider>()
+                                                .captain ==
+                                            skierId;
+                                        outerContext
+                                            .read<TeamProvider>()
+                                            .setLocalCaptain(
+                                                isCaptain ? "" : skierId);
+                                      });
+                                    },
+                                    shape: const CircleBorder(),
+                                    size: const Size(30, 30),
+                                    child: Center(
+                                      child: Text(
+                                        outerContext
+                                                    .read<TeamProvider>()
+                                                    .captain ==
+                                                skierId
+                                            ? "X"
+                                            : "C",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          height: 1,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                        },
                       ),
                     ),
                   ),

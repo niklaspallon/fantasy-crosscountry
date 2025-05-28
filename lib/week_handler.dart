@@ -138,3 +138,25 @@ Future<void> updateTeamsForNewWeek(int nextWeek) async {
     print("❌ Error updating teams for new week: $e");
   }
 }
+
+Future<List<String>> fetchUpcomingEvents() async {
+  try {
+    final db = FirebaseFirestore.instance;
+
+    final eventsSnapshot =
+        await db.collection('gameData').doc('currentWeek').get();
+
+    if (eventsSnapshot.exists) {
+      final competitions = eventsSnapshot.get('competitions');
+      if (competitions != null) {
+        // Convert List<dynamic> to List<String>
+        return List<String>.from(competitions);
+      }
+      return [];
+    }
+    return [];
+  } catch (e) {
+    print("❌ Error fetching upcoming events: $e");
+    return [];
+  }
+}
