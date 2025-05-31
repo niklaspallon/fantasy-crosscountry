@@ -179,58 +179,46 @@ Future<void> leaveLeague(String code) async {
 }
 
 Future<void> joinMiniLeague({
+  required BuildContext context,
   required String leagueCode,
   required String userId,
 }) async {
-  try {
-    // Hämta ligan med den angivna koden
-    final leagueQuery = await FirebaseFirestore.instance
-        .collection('teams')
-        .where('code', isEqualTo: leagueCode)
-        .get();
+  final leagueRef =
+      FirebaseFirestore.instance.collection('miniLeagues').doc(leagueCode);
+  final leagueDoc = await leagueRef.get();
 
-    if (leagueQuery.docs.isEmpty) {
-      throw Exception('Ligan hittades inte');
+  // 🔍 Kolla om ligan existerar
+  if (!leagueDoc.exists) {
+    print('Ligan med kod $leagueCode finns inte.');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("League with code: $leagueCode does not exist")),
+      );
     }
+    return;
+  }
 
-    final league = leagueQuery.docs.first;
-    final leagueId = league.id;
+  final data = leagueDoc.data();
+  final teams = List<String>.from(data?['teams'] ?? []);
 
-    // Kontrollera om användaren redan är med i ligan
-    final userTeamQuery = await FirebaseFirestore.instance
-        .collection('teams')
-        .doc(leagueId)
-        .collection('userTeams')
-        .where('userId', isEqualTo: userId)
-        .get();
-
-    if (userTeamQuery.docs.isNotEmpty) {
-      throw Exception('Du är redan med i denna liga');
+  if (!teams.contains(userId)) {
+    await leagueRef.update({
+      'teams': FieldValue.arrayUnion([userId]),
+    });
+    print('Användaren har lagts till i ligan');
+  } else {
+    print('Användaren är redan med i ligan');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You have already joined this league.")),
+      );
     }
-
-    // Lägg till användaren i ligan
-    await FirebaseFirestore.instance
-        .collection('teams')
-        .doc(leagueId)
-        .collection('userTeams')
-        .add({
-      'userId': userId,
-      'teamName': 'Team ${userId.substring(0, 4)}',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    // Uppdatera antalet lag i ligan
-    await FirebaseFirestore.instance.collection('teams').doc(leagueId).update({
-      'teamCount': FieldValue.increment(1),
-    });
-  } catch (e) {
-    print('Error joining league: $e');
-    rethrow;
   }
 }
 
 Future<List<Map<String, dynamic>>> fetchJoinedLeagues(String userId) async {
   final db = FirebaseFirestore.instance;
+
   final snapshot = await db
       .collection('miniLeagues')
       .where('teams', arrayContains: userId)

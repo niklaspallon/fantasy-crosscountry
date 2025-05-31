@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FANTASY CROSS COUNTRY',
-      home: MiniLeagueScreen(),
+      home: MyHome(),
     );
   }
 }
@@ -332,7 +332,7 @@ Widget skierContainer(BuildContext context, int index, double contSize,
                             .first
                             .toUpperCase(),
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
@@ -401,32 +401,11 @@ Widget budgetWidget(BuildContext context) {
     child: Container(
       height: 70,
       width: 100,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1A237E).withOpacity(0.9),
-            Colors.blue[900]!.withOpacity(0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: reusableBoxDecoration(),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
+          const Text(
             "Budget",
             style: TextStyle(
               color: Colors.white,
@@ -457,33 +436,12 @@ Widget totalTeamPointsWidget(BuildContext context) {
     child: Container(
       height: 70,
       width: 100,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1A237E).withOpacity(0.9),
-            Colors.blue[900]!.withOpacity(0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: reusableBoxDecoration(),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            "Poäng",
+          const Text(
+            "Points",
             style: TextStyle(
               color: Colors.white,
               fontSize: 14,
@@ -578,9 +536,9 @@ Widget saveTeam(BuildContext context) {
                 context.read<TeamProvider>().saveTeamToFirebase(context);
               }
             },
-            backgroundColor: const Color(0xFF1A237E),
+            backgroundColor: hasTeamChanged ? Colors.red : Color(0xFF1A237E),
             child: Text(
-              hasTeamChanged ? "Team changed" : "Spara Lag",
+              "Save Team",
               style: TextStyle(
                 color: hasTeamChanged ? Colors.red : Colors.white,
                 fontSize: 16,
@@ -678,74 +636,144 @@ Widget weekPoints(BuildContext context) {
 Widget showUpcomingEvents(BuildContext context) {
   List<String> upcomingEvents = context.watch<TeamProvider>().upcomingEvents;
   int currentWeek = context.watch<TeamProvider>().currentWeek;
-  return Container(
-    height: 200,
-    width: 500, // Fixed height for the container
-    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [
-          Color(0xFF1A237E).withOpacity(0.9),
-          Color(0xFF1A237E).withOpacity(0.7),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.2),
-          blurRadius: 8,
-          offset: Offset(0, 4),
-        ),
-      ],
-      border: Border.all(
-        color: Colors.white.withOpacity(0.1),
-        width: 1,
-      ),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.all(12),
-          child: Text(
-            'Competitions GW $currentWeek',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
+  return Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Container(
+      height: 200,
+      width: 300, // Fixed height for the container
+      decoration: reusableBoxDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(12),
+            child: Text(
+              'Competitions GW $currentWeek',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            itemCount: upcomingEvents.length,
-            itemBuilder: (context, index) => Container(
-              margin: EdgeInsets.only(bottom: 8),
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              itemCount: upcomingEvents.length,
+              itemBuilder: (context, index) => Container(
+                margin: EdgeInsets.only(bottom: 8),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
-                  width: 1,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  upcomingEvents[index],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget miniLeague(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.all(4.0),
+    child: HoverButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MiniLeagueScreen(),
+          ),
+        );
+      },
+      backgroundColor: const Color(0xFF1A237E),
+      child: const Text(
+        "Mini League",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget adminWidget(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.all(4.0),
+    child: HoverButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AdminScreen(),
+          ),
+        );
+      },
+      backgroundColor: const Color(0xFF1A237E),
+      child: const Text(
+        "Admin",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget sidebar(BuildContext context) {
+  bool isAdmin = context.watch<TeamProvider>().isAdmin;
+  return Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Container(
+      width: 300,
+      padding: const EdgeInsets.all(16),
+      decoration: reusableBoxDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(12),
               child: Text(
-                upcomingEvents[index],
-                style: TextStyle(
+                'Menu',
+                style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
               ),
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          logoutWidget(context),
+          leaderboardWidget(context),
+          miniLeague(context),
+          isAdmin ? adminWidget(context) : const SizedBox.shrink(),
+          const SizedBox(height: 16),
+        ],
+      ),
     ),
   );
 }

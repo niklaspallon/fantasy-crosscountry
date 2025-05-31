@@ -198,7 +198,7 @@ ButtonStartPosition getInfoStartPosition(double containerSize) {
     return const ButtonStartPosition(-18, -18);
   } else {
     // Mobile
-    return const ButtonStartPosition(-10, -6);
+    return const ButtonStartPosition(-16, -15);
   }
 }
 
@@ -211,7 +211,7 @@ ButtonStartPosition getDeleteStartPosition(double containerSize) {
     return const ButtonStartPosition(-15, -18);
   } else {
     // Mobile
-    return const ButtonStartPosition(-12, -6);
+    return const ButtonStartPosition(-16, -14);
   }
 }
 
@@ -224,7 +224,7 @@ ButtonStartPosition getCaptainStartPosition(double containerSize) {
     return const ButtonStartPosition(-15, -16);
   } else {
     // Mobile
-    return const ButtonStartPosition(-12, -12);
+    return const ButtonStartPosition(-16, -18);
   }
 }
 
@@ -450,7 +450,7 @@ void showQuickActionOverlay(
                                             ? "X"
                                             : "C",
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
@@ -474,4 +474,29 @@ void showQuickActionOverlay(
   );
 
   overlay.insert(entry);
+}
+
+BoxDecoration reusableBoxDecoration() {
+  return BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        const Color(0xFF1A237E).withOpacity(0.9),
+        Colors.blue[900]!.withOpacity(0.8),
+      ],
+    ),
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(
+      color: Colors.white.withOpacity(0.2),
+      width: 1,
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.3),
+        blurRadius: 4,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
 }

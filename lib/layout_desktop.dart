@@ -5,6 +5,7 @@ import 'leaderboard_screen.dart';
 import 'adminScreen.dart';
 import 'button_design.dart';
 import 'mini_league_screen.dart';
+import 'appbar_design.dart';
 
 class LayoutDesktop extends StatelessWidget {
   final String teamName;
@@ -19,96 +20,18 @@ class LayoutDesktop extends StatelessWidget {
     required this.deadline,
     required this.isAdmin,
   });
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              teamName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(width: 24),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                "Gameweek: $gameWeek",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-            const SizedBox(width: 24),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.timer,
-                    size: 18,
-                    color: Colors.white70,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    "Deadline: $deadline",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF1A237E),
-                Colors.blue[900]!.withOpacity(0.9),
-                Colors.blue[800]!.withOpacity(0.8),
-              ],
-            ),
-          ),
-        ),
-        elevation: 8,
-        shadowColor: Colors.black.withOpacity(0.5),
+      appBar: CustomAppBar(
+        teamName: teamName,
+        gameWeek: gameWeek,
+        deadline: deadline,
       ),
       body: Stack(
         children: [
+          // Bakgrundsbild
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -119,42 +42,7 @@ class LayoutDesktop extends StatelessWidget {
           ),
           Column(
             children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Row(
-                  children: [
-                    leaderboardWidget(context),
-                    const SizedBox(width: 8),
-                    HoverButton(
-                      text: "Mini Leagues",
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MiniLeagueScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    saveTeam(context),
-                    const SizedBox(width: 8),
-                    logoutWidget(context),
-                    const SizedBox(width: 8),
-                    if (isAdmin)
-                      HoverButton(
-                        text: "Admin",
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => AdminScreen()),
-                          );
-                        },
-                      ),
-                  ],
-                ),
-              ),
+              // Översta rad med info
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -163,31 +51,68 @@ class LayoutDesktop extends StatelessWidget {
                   weekPoints(context),
                 ],
               ),
-              const SizedBox(height: 8),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Vänster sidebar
+                    Container(
+                      width: 300,
+                      height: 400,
+                      padding: const EdgeInsets.all(8),
+                      child: sidebar(context),
+                    ),
+
+                    // Huvudinnehåll
+                    Expanded(
+                      child: Column(
                         children: [
-                          skierContainer(context, 0, 120, 12, 10, 10),
-                          skierContainer(context, 1, 120, 12, 10, 10),
-                          skierContainer(context, 2, 120, 12, 10, 10),
+                          // Övre rad med spelare + events
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              skierContainer(context, 0, 120, 12, 10, 10),
+                              skierContainer(context, 1, 120, 12, 10, 10),
+                              skierContainer(context, 2, 120, 12, 10, 10),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Nedre rad med spelare
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              skierContainer(context, 3, 120, 12, 10, 10),
+                              skierContainer(context, 4, 120, 12, 10, 10),
+                              skierContainer(context, 5, 120, 12, 10, 10),
+                            ],
+                          ),
+                          const SizedBox(height: 15),
+
+                          // Spara-knapp
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 200,
+                                child: saveTeam(context),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          skierContainer(context, 3, 120, 12, 10, 10),
-                          skierContainer(context, 4, 120, 12, 10, 10),
-                          skierContainer(context, 5, 120, 12, 10, 10),
-                        ],
+                    ),
+
+                    // Högerpanel
+                    Container(
+                      width: 300,
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [showUpcomingEvents(context)],
                       ),
-                      const SizedBox(height: 3),
-                      showUpcomingEvents(context),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],

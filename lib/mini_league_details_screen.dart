@@ -110,11 +110,11 @@ class MiniLeagueDetailScreen extends StatelessWidget {
               width: 1,
             ),
           ),
-          title: Row(
+          title: const Row(
             children: [
-              const Icon(Icons.code, color: Colors.amber, size: 32),
-              const SizedBox(width: 12),
-              const Text(
+              Icon(Icons.code, color: Colors.amber, size: 32),
+              SizedBox(width: 12),
+              Text(
                 "League Code",
                 style: TextStyle(
                   color: Colors.white,
@@ -214,7 +214,10 @@ class MiniLeagueDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(leagueName),
+        title: Text(
+          leagueName,
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: const Color(0xFF1A237E),
         actions: [
           Container(

@@ -4,6 +4,7 @@ import 'main.dart';
 import 'loginScreen.dart';
 import 'leaderboard_screen.dart';
 import 'adminScreen.dart';
+import 'appbar_design.dart';
 
 class LayoutMobile extends StatelessWidget {
   final String teamName;
@@ -22,139 +23,9 @@ class LayoutMobile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Container(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                teamName,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "GW: $gameWeek",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.timer,
-                      size: 12,
-                      color: Colors.white70,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      deadline ?? "",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        centerTitle: true,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF1A237E),
-                Colors.blue[900]!.withOpacity(0.9),
-                Colors.blue[800]!.withOpacity(0.8),
-              ],
-            ),
-          ),
-        ),
-        elevation: 8,
-        shadowColor: Colors.black.withOpacity(0.5),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.lightBlue),
-              child: Text("Meny", style: TextStyle(fontSize: 18)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.leaderboard),
-              title: const Text("Leaderboard"),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => LeaderboardScreen(),
-                    ));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.emoji_events),
-              title: const Text("Miniliga (Kommer snart)"),
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => MiniLeagueScreen()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text("Logga ut"),
-              onTap: () {
-                Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => LoginScreen(),
-                    ));
-              },
-            ),
-            if (isAdmin)
-              ListTile(
-                leading: const Icon(Icons.admin_panel_settings),
-                title: const Text("Admin"),
-                onTap: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AdminScreen(),
-                      ));
-                },
-              ),
-          ],
-        ),
-      ),
+      appBar: CompactAppBar(
+          teamName: teamName, gameWeek: gameWeek, deadline: deadline),
+      drawer: ThemedDrawer(isAdmin: isAdmin),
       body: Stack(
         children: [
           Container(
@@ -197,7 +68,7 @@ class LayoutMobile extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 3),
-                      Container(
+                      SizedBox(
                         height: 50,
                         width: 150,
                         child: saveTeam(context),
@@ -213,4 +84,144 @@ class LayoutMobile extends StatelessWidget {
       ),
     );
   }
+}
+
+class ThemedDrawer extends StatelessWidget {
+  final bool isAdmin;
+
+  const ThemedDrawer({super.key, required this.isAdmin});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF1A237E).withOpacity(0.95),
+              Colors.blue[900]!.withOpacity(0.85),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+              ),
+              child: const Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Menu",
+                          style: TextStyle(color: Colors.white, fontSize: 18)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white24, thickness: 1),
+            _drawerItem(
+              context,
+              icon: Icons.leaderboard,
+              text: "Leaderboard",
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => LeaderboardScreen()));
+              },
+            ),
+            _divider(),
+            _drawerItem(
+              context,
+              icon: Icons.emoji_events,
+              text: "Mini Leagues",
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => MiniLeagueScreen()));
+              },
+            ),
+            _divider(),
+            _drawerItem(
+              context,
+              icon: Icons.logout,
+              text: "Logout",
+              onTap: () {
+                Navigator.pushReplacement(
+                    context, MaterialPageRoute(builder: (_) => LoginScreen()));
+              },
+            ),
+            if (isAdmin) ...[
+              _divider(),
+              _drawerItem(
+                context,
+                icon: Icons.admin_panel_settings,
+                text: "Admin",
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const AdminScreen()));
+                },
+              ),
+            ],
+            const Divider(color: Colors.white24, thickness: 1, height: 32),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                "Fantasy Crosscountry 2025",
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.5), fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerItem(BuildContext context,
+      {required IconData icon,
+      required String text,
+      required VoidCallback onTap}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.amberAccent),
+              const SizedBox(width: 12),
+              Text(text,
+                  style: const TextStyle(color: Colors.white, fontSize: 16)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _divider() => const Divider(color: Colors.white24, thickness: 1);
 }

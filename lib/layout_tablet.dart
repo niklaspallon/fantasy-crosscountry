@@ -4,6 +4,7 @@ import 'main.dart';
 import 'adminScreen.dart';
 import 'button_design.dart';
 import 'mini_league_screen.dart';
+import 'appbar_design.dart';
 
 class LayoutTablet extends StatelessWidget {
   final String teamName;
@@ -21,90 +22,10 @@ class LayoutTablet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              teamName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(width: 20),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                "Gameweek: $gameWeek",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-            const SizedBox(width: 20),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.timer,
-                    size: 16,
-                    color: Colors.white70,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    "Deadline: $deadline",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF1A237E),
-                Colors.blue[900]!.withOpacity(0.9),
-                Colors.blue[800]!.withOpacity(0.8),
-              ],
-            ),
-          ),
-        ),
-        elevation: 8,
-        shadowColor: Colors.black.withOpacity(0.5),
+      appBar: CustomAppBar(
+        teamName: teamName,
+        gameWeek: gameWeek,
+        deadline: deadline,
       ),
       body: Stack(
         children: [

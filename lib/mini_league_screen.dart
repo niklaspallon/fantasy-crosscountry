@@ -14,12 +14,31 @@ class MiniLeagueScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          JoinLeague(),
-          CreateMiniLeague(),
-          JoinedLeagues(),
-        ],
+      appBar: AppBar(
+        title: const Text(
+          "Mini Leagues",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF1A237E),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1A237E), Color(0xFF1B263B)],
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            JoinLeague(),
+            const SizedBox(height: 10),
+            CreateMiniLeague(),
+            const SizedBox(height: 10),
+            const Expanded(child: JoinedLeagues()),
+          ],
+        ),
       ),
     );
   }
@@ -98,7 +117,10 @@ class JoinLeague extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                joinMiniLeague(leagueCode: controller.text, userId: userId);
+                joinMiniLeague(
+                    context: context,
+                    leagueCode: controller.text,
+                    userId: userId);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber,
@@ -141,7 +163,6 @@ class CreateMiniLeague extends StatelessWidget {
         children: [
           // Create League Section
           Container(
-            margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -253,128 +274,154 @@ class JoinedLeagues extends StatefulWidget {
 class _JoinedLeaguesState extends State<JoinedLeagues> {
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: fetchJoinedLeagues(context.read<TeamProvider>().ownerId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: fetchJoinedLeagues(context.read<TeamProvider>().ownerId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading leagues: ${snapshot.error}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        final leagues = snapshot.data ?? [];
+
+        if (leagues.isEmpty) {
+          return const Center(
+            child: Text(
+              'You are not part of any leagues yet.',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
               ),
-            );
-          }
+            ),
+          );
+        }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error loading leagues: ${snapshot.error}',
-                style: const TextStyle(color: Colors.white),
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF1A237E).withOpacity(0.9),
+                Colors.blue[900]!.withOpacity(0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
-            );
-          }
-
-          final leagues = snapshot.data ?? [];
-
-          if (leagues.isEmpty) {
-            return const Center(
-              child: Text(
-                'You are not part of any leagues yet.',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text(
+                  "Mini Leagues",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: leagues.length,
-            itemBuilder: (context, index) {
-              final league = leagues[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF1A237E).withOpacity(0.9),
-                      Colors.blue[900]!.withOpacity(0.8),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  title: Text(
-                    league['name'] ?? "Unknown League",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  subtitle: Text(
-                    "${league['teamsCount']} teams",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 14,
-                    ),
-                  ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.amber.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Text(
-                      league['code'] ?? "",
-                      style: const TextStyle(
-                        color: Colors.amber,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MiniLeagueDetailScreen(
-                          code: league['code'],
-                          leagueName: league['name'],
+              Expanded(
+                child: ListView.builder(
+                  itemCount: leagues.length,
+                  itemBuilder: (context, index) {
+                    final league = leagues[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 1,
                         ),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        title: Text(
+                          league['name'] ?? "Unknown League",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "${league['teamsCount']} teams",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.amber.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Text(
+                            league['code'] ?? "",
+                            style: const TextStyle(
+                              color: Colors.amber,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MiniLeagueDetailScreen(
+                                code: league['code'],
+                                leagueName: league['name'],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
                 ),
-              );
-            },
-          );
-        },
-      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

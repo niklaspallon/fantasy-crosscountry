@@ -37,7 +37,7 @@ class BaseComponent extends StatelessWidget {
 
 class ScreenUtils {
   static const breakpointSm = 700.0;
-  static const breakpointMd = 992.0;
+  static const breakpointMd = 1050.0;
 
   static ScreenSize size(BuildContext context) {
     final width = MediaQuery.of(context).size.width;

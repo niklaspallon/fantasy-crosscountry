@@ -312,7 +312,8 @@ class TeamProvider extends ChangeNotifier {
       }
 
       _userTeam = fetchedTeam;
-      _lastSavedTeam = fetchedTeam;
+      _lastSavedTeam =
+          fetchedTeam.map((skier) => Map<String, dynamic>.from(skier)).toList();
       _weekPoints = totalPoints;
 
       print("✅ Lag för vecka $_currentWeek hämtat med poäng: $_weekPoints");
@@ -389,11 +390,7 @@ class TeamProvider extends ChangeNotifier {
   }
 
   void _checkTeamChanges() {
-    if (_userTeam.length != _lastSavedTeam.length) {
-      _hasTeamChanged = true;
-      notifyListeners();
-      return;
-    }
+    print("Check team changes kördes");
 
     // Skapa set av åkare-IDs för båda lagen
     Set<String> currentTeamIds =
@@ -405,6 +402,9 @@ class TeamProvider extends ChangeNotifier {
     if (currentTeamIds.difference(savedTeamIds).isNotEmpty ||
         savedTeamIds.difference(currentTeamIds).isNotEmpty) {
       _hasTeamChanged = true;
+    } else {
+      checkIfUserIsAdmin();
+      _hasTeamChanged = false;
       notifyListeners();
     }
   }
@@ -463,6 +463,7 @@ class TeamProvider extends ChangeNotifier {
 
       // Kontrollera om laget har ändrats
       _checkTeamChanges();
+      notifyListeners();
 
       // Uppdatera UI
       notifyListeners();
@@ -474,7 +475,6 @@ class TeamProvider extends ChangeNotifier {
   Future<bool> addSkierToTeam(String skierId, BuildContext context) async {
     List<Map<String, dynamic>> locSkiers =
         context.read<SkiersProvider>().locSkiers;
-    print("addskier to team kördes");
 
     try {
       // Trigger feedback if context is valid
@@ -555,18 +555,12 @@ class TeamProvider extends ChangeNotifier {
 
       // Lägg till åkaren i det lokala laget
       _userTeam.add(skierData);
-
-      print("$skierId, lades till");
-      print("total male skiers: ${genderCount['Male']}");
-      print("total female skiers: ${genderCount['Female']}");
-      print("total skiers: ${_userTeam.length}");
+      _checkTeamChanges();
 
       // 🔹 Uppdatera budgeten lokalt
       _totalBudget -= skierPrice;
-      print("Ny budget: $_totalBudget");
 
       // Kontrollera om laget har ändrats
-      _checkTeamChanges();
 
       // 🔹 Uppdatera UI
       notifyListeners();
@@ -675,11 +669,6 @@ class TeamProvider extends ChangeNotifier {
         print("Team has now ${_userTeam.length} skiers");
         print(isFullTeam);
       }
-
-      // Uppdatera lastSavedTeam och återställ hasTeamChanged
-      _lastSavedTeam = List.from(_userTeam);
-      _hasTeamChanged = false;
-      notifyListeners();
 
       showSuccessDialog(
           context, "✅ Lag sparat!", "Ditt lag har sparats för $_currentWeek");

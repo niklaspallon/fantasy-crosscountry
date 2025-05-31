@@ -1,58 +1,84 @@
-# 📦 OS-specifika filer
-.DS_Store
-*.swp
-*.log
-*.class
-*.pyc
-.history
-.svn/
-.env
-
-# 💻 Editorfiler
-.vscode/
-.idea/
-*.iml
-*.ipr
-*.iws
-.atom/
-.buildlog/
-
-# 🔧 Flutter/Dart-relaterat
+# Dart/Pub
 .dart_tool/
+.packages
+.pub-cache/
+.buildlog/
+*.dart.js
+*.info.json
+
+# Flutter/Dart
 .flutter-plugins
 .flutter-plugins-dependencies
-.packages
-.pub/
-.pub-cache/
-build/
-**/doc/api/
-**/ios/Flutter/.last_build_id
+.flutter-versions
+.melos_tool/
+generated_plugin_registrant.dart
 
-# 📱 Android build mappar
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Build outputs
+build/
+**/build/
+**/out/
+*.class
+
+# iOS
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/App.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+
+# macOS
+macos/Flutter/ephemeral/
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Android
+.android/
 android/.gradle/
-android/app/build/
+android/local.properties
 android/app/debug/
 android/app/profile/
 android/app/release/
+android/key.properties
 
-# 🧪 iOS/macOS build mappar
-ios/Pods/
-ios/Flutter/
-macos/Flutter/
-linux/flutter/
-windows/flutter/
+# Xcode
+*.xcworkspace
+*.xcuserstate
+*.xcuserdata/
+DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.moved-aside
 
-# 🛡️ Firebase – exkludera känsliga filer
-firebase_options.dart
+# Others
+*.log
+*.tmp
+*.lock
+*.swp
+.DS_Store
+*.bak
+*.old
+
+# Git
+*.orig
+
+# Git LFS
+*.lfsconfig
+
+# Exceptions (behåll vissa filer om du verkligen vill det)
+!default.pbxuser
+!default.mode1v3
+!default.mode2v3
+!default.perspectivev3
+# Firebase
 .firebase/
-.firebaserc
-firebase.json
-hosting.*
-
-# 🧩 Obfuscation & symbolication
-app.*.symbols
-app.*.map.json
-
-# 🛠 Migration leftovers
-migrate_working_dir/
-
+firebase-debug.log
