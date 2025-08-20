@@ -1,32 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:real_fls/authProvider.dart';
-import 'package:real_fls/choose_skier_screen.dart';
+import 'package:real_fls/providers/auth_provider.dart';
+import 'package:real_fls/screens/choose_skier_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'loginScreen.dart';
-import 'teamProvider.dart';
+import 'screens/login_screen.dart';
+import 'providers/team_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'leaderboard_screen.dart';
-import 'alertdialog_skier.dart';
-import 'adminScreen.dart';
-import 'screen_utils.dart';
-import 'skiers_provider.dart';
-import 'flags.dart';
+import 'screens/leaderboard_screen.dart';
+import 'designs/alertdialog_skier.dart';
+import 'screens/admin_screen.dart';
+import 'utils/screen_utils.dart';
+import 'providers/skiers_provider.dart';
+import 'designs/flags.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:intl/intl.dart'; // 📅 För att formatera datum
-import 'addSkierToFb.dart';
-import 'button_design.dart';
-import 'layout_tablet.dart';
-import 'layout_desktop.dart';
-import 'layout_mobile.dart';
-import 'mini_league_screen.dart';
+import 'package:intl/intl.dart';
+import 'designs/button_design.dart';
+import 'screens/layout_tablet.dart';
+import 'screens/layout_desktop.dart';
+import 'screens/layout_mobile.dart';
+import 'screens/mini_league_screen.dart';
+import 'screens/rules_screen.dart';
+import 'handlers/add_skier_to_fb.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  //updateSkierPrices();
   //clearSkiersDb();
   //addSkiersToFirestore();
   // Försök att auto-logga in
@@ -131,7 +134,8 @@ Widget skierContainer(BuildContext context, int index, double contSize,
   final bool hasPlayer = adjustedIndex < filteredTeam.length;
   final skierId = hasPlayer ? filteredTeam[adjustedIndex]['id'] : null;
   String captainId = context.watch<TeamProvider>().captain;
-
+  final weeklySkierPoints =
+      hasPlayer ? filteredTeam[adjustedIndex]["totalWeeklyPoints"] ?? 0 : 0;
   return Padding(
     padding: const EdgeInsets.all(8.0),
     child: Column(
@@ -297,8 +301,8 @@ Widget skierContainer(BuildContext context, int index, double contSize,
         const SizedBox(height: 8),
         hasPlayer
             ? Container(
-                height: contSize * 0.6,
-                width: contSize * 0.7,
+                height: contSize * 0.7,
+                width: contSize * 0.8,
                 padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 6),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -358,7 +362,7 @@ Widget skierContainer(BuildContext context, int index, double contSize,
                       const SizedBox(height: 2),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                            horizontal: 6, vertical: 4),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
@@ -376,7 +380,7 @@ Widget skierContainer(BuildContext context, int index, double contSize,
                           ],
                         ),
                         child: Text(
-                          "${filteredTeam[adjustedIndex]["price"]}M",
+                          "${filteredTeam[adjustedIndex]["marketPrice"] ?? filteredTeam[adjustedIndex]["price"]} M",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: priceSize,
@@ -389,6 +393,44 @@ Widget skierContainer(BuildContext context, int index, double contSize,
                 ),
               )
             : SizedBox(height: contSize * 0.6),
+        hasPlayer
+            ? Padding(
+                padding: const EdgeInsets.all(
+                    3.0), //KAN BLI GEL MED PADDINGEN, TA BORT OM OK
+                child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.amber[600]!,
+                          Colors.amber[700]!,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    height: 25,
+                    width: 35,
+                    child: Center(
+                      child: Text(
+                        weeklySkierPoints.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )),
+              )
+            : const Text(
+                "",
+              )
       ],
     ),
   );
@@ -416,7 +458,7 @@ Widget budgetWidget(BuildContext context) {
           ),
           const SizedBox(height: 4),
           Text(
-            "$totalBudget M",
+            "${totalBudget.toStringAsFixed(1)} M",
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -504,7 +546,7 @@ Widget saveTeam(BuildContext context) {
 
   return hasDeadlinePassed
       ? Padding(
-          padding: const EdgeInsets.all(4.0),
+          padding: const EdgeInsets.all(3.0),
           child: Container(
             height: 50,
             width: 150,
@@ -528,12 +570,14 @@ Widget saveTeam(BuildContext context) {
       : Padding(
           padding: const EdgeInsets.all(4.0),
           child: HoverButton(
-            onPressed: () {
+            onPressed: () async {
               if (captain.isEmpty) {
                 showAlertDialog(context, "Ingen kapten vald",
-                    "Du måste väja en kapten för att spara lag");
+                    "Du måste välja en kapten för att spara lag");
               } else {
-                context.read<TeamProvider>().saveTeamToFirebase(context);
+                //context.read<TeamProvider>().saveTeamToFirebase(context);
+                await showConfirmAndSaveTeamDialog(
+                    context, context.read<TeamProvider>());
               }
             },
             backgroundColor: hasTeamChanged ? Colors.red : Color(0xFF1A237E),
@@ -565,6 +609,32 @@ Widget logoutWidget(BuildContext context) {
       backgroundColor: const Color(0xFF1A237E),
       child: const Text(
         "Logga ut",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget rulesWidget(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.all(4.0),
+    child: HoverButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RulesScreen(),
+          ),
+        );
+      },
+      backgroundColor: const Color(0xFF1A237E),
+      child: const Text(
+        "Rules",
         style: TextStyle(
           color: Colors.white,
           fontSize: 16,
@@ -752,28 +822,400 @@ Widget sidebar(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(12),
-              child: Text(
-                'Menu',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+          Row(
+            children: [
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(2),
+                  child: Text(
+                    'Menu',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              IconButton(
+                  onPressed: () {},
+                  icon: Icon(Icons.close, color: Colors.white)),
+            ],
           ),
           const SizedBox(height: 8),
           logoutWidget(context),
           leaderboardWidget(context),
           miniLeague(context),
+          rulesWidget(context),
           isAdmin ? adminWidget(context) : const SizedBox.shrink(),
           const SizedBox(height: 16),
         ],
       ),
     ),
   );
+}
+
+class ThemedDrawer extends StatelessWidget {
+  final bool isAdmin;
+
+  const ThemedDrawer({super.key, required this.isAdmin});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF1A237E).withOpacity(0.95),
+              Colors.blue[900]!.withOpacity(0.85),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+              ),
+              child: const Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Menu",
+                          style: TextStyle(color: Colors.white, fontSize: 18)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white24, thickness: 1),
+            _drawerItem(
+              context,
+              icon: Icons.emoji_events,
+              text: "Leaderboard",
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => LeaderboardScreen()));
+              },
+            ),
+            _divider(),
+            _drawerItem(
+              context,
+              icon: Icons.group,
+              text: "Mini Leagues",
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => MiniLeagueScreen()));
+              },
+            ),
+            _divider(),
+            _drawerItem(
+              context,
+              icon: Icons.rule,
+              text: "Rules",
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const RulesScreen()));
+              },
+            ),
+            _divider(),
+            _drawerItem(
+              context,
+              icon: Icons.logout,
+              text: "Logout",
+              onTap: () {
+                Navigator.pushReplacement(
+                    context, MaterialPageRoute(builder: (_) => LoginScreen()));
+              },
+            ),
+            if (isAdmin) ...[
+              _divider(),
+              _drawerItem(
+                context,
+                icon: Icons.admin_panel_settings,
+                text: "Admin",
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const AdminScreen()));
+                },
+              ),
+            ],
+            const Divider(color: Colors.white24, thickness: 1, height: 32),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                "Fantasy Crosscountry 2025",
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.5), fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerItem(BuildContext context,
+      {required IconData icon,
+      required String text,
+      required VoidCallback onTap}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.amberAccent),
+              const SizedBox(width: 12),
+              Text(text,
+                  style: const TextStyle(color: Colors.white, fontSize: 16)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _divider() => const Divider(color: Colors.white24, thickness: 1);
+}
+
+class TransferSummaryContent extends StatelessWidget {
+  final List<Map<String, dynamic>> currentTeam;
+  final List<Map<String, dynamic>> lastSavedTeam;
+  final int freeTransfers;
+  final int numberOfChanges;
+  final int paidTransfers;
+  final int pointsPerPaidTransfer;
+
+  const TransferSummaryContent({
+    required this.currentTeam,
+    required this.lastSavedTeam,
+    required this.freeTransfers,
+    required this.numberOfChanges,
+    required this.paidTransfers,
+    this.pointsPerPaidTransfer = 40,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    bool unlimitedTransfers = context.watch<TeamProvider>().unlimitedTransfers;
+
+    final currentIds = currentTeam.map((s) => s['id']).toSet();
+    final savedIds = lastSavedTeam.map((s) => s['id']).toSet();
+
+    final added =
+        currentTeam.where((s) => !savedIds.contains(s['id'])).toList();
+    final removed =
+        lastSavedTeam.where((s) => !currentIds.contains(s['id'])).toList();
+    final usedFreeTransfers = numberOfChanges - paidTransfers;
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Transfer Summary",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (added.isNotEmpty) ...[
+            const Text("➕ New Skiers:",
+                style: TextStyle(
+                    color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ...added.map(
+              (s) => _transferCard(
+                name: s['name'],
+                country: s['country'],
+                color: Colors.green[700]!,
+                icon: Icons.arrow_downward,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (removed.isNotEmpty) ...[
+            const Text("➖ Removed Skiers:",
+                style: TextStyle(
+                    color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ...removed.map(
+              (s) => _transferCard(
+                name: s['name'],
+                country: s['country'],
+                color: Colors.red[700]!,
+                icon: Icons.arrow_upward,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          _summaryRow(Icons.swap_horiz, "Total Transfers", "$numberOfChanges"),
+          _summaryRow(Icons.card_giftcard, "Free Transfers",
+              unlimitedTransfers ? "∞" : "$usedFreeTransfers"),
+          _summaryRow(Icons.monetization_on, "Payed Transfers",
+              unlimitedTransfers ? "0" : "$paidTransfers"),
+          if (paidTransfers > 0)
+            _summaryRow(
+                Icons.warning_amber_rounded,
+                "Cost",
+                unlimitedTransfers
+                    ? "0"
+                    : "${paidTransfers * pointsPerPaidTransfer} Points",
+                color: unlimitedTransfers ? Colors.white : Colors.redAccent),
+        ],
+      ),
+    );
+  }
+
+  Widget _transferCard({
+    required String name,
+    required String country,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.8), color.withOpacity(0.4)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    name,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                flagWidget(country),
+                const SizedBox(width: 8),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(IconData icon, String label, String value,
+      {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color ?? Colors.white70),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: color ?? Colors.white70, fontSize: 14),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: color ?? Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> showConfirmAndSaveTeamDialog(
+    BuildContext context, TeamProvider teamProvider) async {
+  final shouldSave = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: const Color(0xFF1A237E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      contentPadding: const EdgeInsets.all(20),
+      content: TransferSummaryContent(
+        currentTeam: teamProvider.userTeam,
+        lastSavedTeam: teamProvider.lastSavedTeam,
+        freeTransfers: teamProvider.freeTransfers,
+        numberOfChanges: teamProvider.numberOfChanges,
+        paidTransfers: teamProvider.paidTransfers,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text(
+            "Cancel",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green[600],
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text("Confirm and Save"),
+        ),
+      ],
+    ),
+  );
+
+  if (shouldSave == true) {
+    final deadline = teamProvider.weekDeadline;
+    if (deadline != null && deadline.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Deadline has passed. Cannot save team."),
+        ),
+      );
+      return;
+    }
+    await teamProvider.saveTeamToFirebase(context);
+  }
 }
