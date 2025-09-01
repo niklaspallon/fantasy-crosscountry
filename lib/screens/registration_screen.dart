@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:real_fls/screens/login_screen.dart';
 import '../providers/auth_provider.dart';
 import '../providers/team_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -144,10 +145,163 @@ class RegistrationScreen extends StatelessWidget {
                           height: 50,
                           child: ElevatedButton(
                             onPressed: () async {
-                              await authProvider.register(context);
-                              if (FirebaseAuth.instance.currentUser != null &&
-                                  teamNameController.text.isNotEmpty) {
-                                await createTeam(teamNameController.text);
+                              final email =
+                                  authProvider.emailController.text.trim();
+                              final teamName = teamNameController.text.trim();
+
+                              if (email.isEmpty || teamName.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('Please fill in all fields')),
+                                );
+                                return;
+                              }
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                useRootNavigator: true,
+                                builder: (BuildContext dialogContext) {
+                                  return AlertDialog(
+                                    backgroundColor:
+                                        const Color(0xFF1A237E), // Deep indigo
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    title: Column(
+                                      children: [
+                                        const Text(
+                                          "Confirm Team Creation",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Container(
+                                          height: 2,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Colors.transparent,
+                                                Colors.blue,
+                                                Colors.transparent,
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    content: SizedBox(
+                                      width: 300,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            "Email: $email",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            "Team Name: $teamName",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    actions: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 8),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            TextButton.icon(
+                                              icon: const Icon(Icons.close,
+                                                  size: 20,
+                                                  color: Colors.white70),
+                                              label: const Text(
+                                                "Cancel",
+                                                style: TextStyle(
+                                                    color: Colors.white70),
+                                              ),
+                                              style: TextButton.styleFrom(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 16,
+                                                  vertical: 12,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                              ),
+                                              onPressed: () =>
+                                                  Navigator.of(dialogContext)
+                                                      .pop(false),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            ElevatedButton.icon(
+                                              icon: const Icon(Icons.check,
+                                                  size: 20,
+                                                  color: Colors.white),
+                                              label: const Text(
+                                                "Confirm",
+                                                style: TextStyle(
+                                                    color: Colors.white),
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    Colors.blueAccent,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 20,
+                                                  vertical: 12,
+                                                ),
+                                                elevation: 5,
+                                              ),
+                                              onPressed: () =>
+                                                  Navigator.of(dialogContext)
+                                                      .pop(true),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (confirm == true) {
+                                bool success =
+                                    await authProvider.register(context);
+                                if (success) {
+                                  await createTeam(teamName);
+
+                                  if (context.mounted) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const LoginScreen(),
+                                      ),
+                                    );
+                                  }
+                                }
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -155,12 +309,13 @@ class RegistrationScreen extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              elevation: 5,
                             ),
-                            child: const Text(
-                              'Create Account',
-                              style:
-                                  TextStyle(fontSize: 18, color: Colors.white),
+                            child: const Center(
+                              child: Text(
+                                'Create Account',
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 18),
+                              ),
                             ),
                           ),
                         ),

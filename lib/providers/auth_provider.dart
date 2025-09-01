@@ -1,6 +1,7 @@
 import 'package:real_fls/main.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:real_fls/screens/login_screen.dart';
 import 'team_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -27,7 +28,10 @@ class AuthenticProvider extends ChangeNotifier {
       );
 
       print("Hämtar teamdata efter inloggning...");
-      await context.read<TeamProvider>().getLoginData();
+
+      if (context.mounted) {
+        await context.read<TeamProvider>().getLoginData();
+      }
 
       // Navigera till debug screen
       if (context.mounted) {
@@ -36,9 +40,45 @@ class AuthenticProvider extends ChangeNotifier {
           MaterialPageRoute(builder: (_) => const MyHome()),
         );
       }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+
+      switch (e.code) {
+        case 'invalid-email':
+          errorMessage = 'The email address is invalid.';
+          break;
+        case 'user-disabled':
+          errorMessage = 'This account has been disabled.';
+          break;
+        case 'user-not-found':
+          errorMessage = 'No account found with this email.';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Incorrect password. Please try again.';
+          break;
+        case 'too-many-requests':
+          errorMessage = 'Too many login attempts. Try again later.';
+          break;
+        case 'operation-not-allowed':
+          errorMessage = 'Email/password login is not enabled.';
+          break;
+        default:
+          errorMessage =
+              'Login failed. Please check your email and password and try again.';
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Login error: $e')));
+      // fallback for any non-Firebase errors
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An unexpected error occurred: $e')),
+        );
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -57,34 +97,32 @@ class AuthenticProvider extends ChangeNotifier {
     super.dispose();
   }
 
-  Future<void> register(BuildContext context) async {
+  Future<bool> register(BuildContext context) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       await _auth.createUserWithEmailAndPassword(
-        email: emailController.text.trim(), // ✅ Rätt sätt att hämta e-post
-        password: passwordController.text.trim(), // Lägg även till trim här
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
       );
 
-      // Vid lyckad registrering, navigera till HomeScreen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MyHome()),
-      );
+      // Registrering lyckades
+      return true;
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'email-already-in-use') {
-        message = 'Emailen används redan.';
+        message = 'Email is already in use.';
       } else if (e.code == 'weak-password') {
-        message = 'Lösenordet är för svagt.';
+        message = 'Password is too weak.';
       } else if (e.code == 'invalid-email') {
-        message = 'Ogiltig email.';
+        message = 'Invalid email address.';
       } else {
         message = 'Error: ${e.message}';
       }
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
+      return false; // Registrering misslyckades
     } finally {
       _isLoading = false;
       notifyListeners();

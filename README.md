@@ -6,13 +6,13 @@ This project is built as a personal portfolio/demo app to showcase full-stack mo
 
 ## Features
 
-- 🧍 Pick 3 male and 3 female skiers to form your fantasy team
-- 💰 Budget system – stronger skiers cost more
-- 🏆 Earn points based on real-world race results
-- 👥 Join private mini-leagues with friends
-- 🌍 Global leaderboard to compete with all users
-- 🔐 Firebase authentication (login, signup)
-- ☁️ Firebase Firestore database to manage skiers, teams, and points
+-  Pick 3 male and 3 female skiers to form your fantasy team
+-  Budget system – stronger skiers cost more
+-  Earn points based on real-world race results
+-  Join private mini-leagues with friends
+-  Global leaderboard to compete with all users
+-  Firebase authentication (login, signup)
+-  Firebase Firestore database to manage skiers, teams, and points
 
 ## Tech Stack
 
@@ -41,7 +41,7 @@ This app fetches real-time race results directly from the [FIS (International Sk
 
 ---
 
-### 🎯 Scoring System
+###  Scoring System
 
 Points are awarded to skiers based on their placement in each race. The scoring follows a descending scale inspired by Fantasy Premier League and World Cup formats.
 
@@ -64,7 +64,7 @@ Points are awarded to skiers based on their placement in each race. The scoring 
 
 This system is designed to reward consistent high performance while encouraging strategic team-building within a limited budget.
 
-## 🛠️ Project Status
+##  Project Status
 
 This app is mostly functional and was tested during the end of the previous cross-country skiing season. Core features like team creation, scoring system, captain bonus points, and leaderboard are working as intended.
 
@@ -103,10 +103,9 @@ The screen where users select 3 male and 3 female skiers to form their team.
 
 ---
 
-###  Home Layout
-Home screen layout after selection.
-
-![Home Screen 2](assets/screenshots/Sc_homescreen2.jpg)
+###  Menu Layout
+Menu
+![Menu](assets/screenshots/sc_menu.jpg)
 
 ---
 
