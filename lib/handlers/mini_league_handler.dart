@@ -23,8 +23,8 @@ Future<List<Map<String, dynamic>>> getLeaguesForUser(String userId) async {
   }).toList();
 }
 
-/// Creates a new league with the given name
-Future<bool> createLeague({
+/// Creates a new league and returns the league info
+Future<Map<String, dynamic>?> createLeague({
   required String leagueName,
   required String userId,
   required BuildContext context,
@@ -33,34 +33,41 @@ Future<bool> createLeague({
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Please enter a league name")),
     );
-    return false;
+    return null;
   }
 
   try {
-    final success = await createMiniLeagueWithAutoCode(
+    // Skapa ligan och få koden
+    final code = await createMiniLeagueWithAutoCode(
       leagueName: leagueName,
       createdByUid: userId,
       createdAt: DateTime.now(),
     );
 
-    if (success && context.mounted) {
+    if (code != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("League created successfully!")),
       );
-      return true;
+
+      // Returnera info om ligan
+      return {
+        'name': leagueName,
+        'code': code,
+        'teamsCount': 1, // du är den första spelaren
+      };
     }
-    return false;
+    return null;
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to create league")),
       );
     }
-    return false;
+    return null;
   }
 }
 
-Future<bool> createMiniLeagueWithAutoCode({
+Future<String?> createMiniLeagueWithAutoCode({
   required String leagueName,
   required String createdByUid,
   required DateTime createdAt,
@@ -68,10 +75,10 @@ Future<bool> createMiniLeagueWithAutoCode({
   try {
     final db = FirebaseFirestore.instance;
 
-    // 🔐 Generera unik kod
+    // Generera unik kod
     String code = await generateUniqueLeagueCode();
 
-    // 📝 Spara ligan med code som dokument-ID
+    // Spara ligan
     await db.collection('miniLeagues').doc(code).set({
       'code': code,
       'createdBy': createdByUid,
@@ -81,10 +88,10 @@ Future<bool> createMiniLeagueWithAutoCode({
     });
 
     print("✅ Miniliga '$leagueName' skapades med kod: $code");
-    return true;
+    return code;
   } catch (e) {
     print("❌ Fel vid skapande av miniliga: $e");
-    return false;
+    return null;
   }
 }
 

@@ -134,11 +134,12 @@ class SkierListTablet extends StatelessWidget {
         String skierId = skierData['id'];
         bool alreadyAdded = context
             .watch<TeamProvider>()
-            .userTeam
+            .userTeam!
             .any((athlete) => athlete['id'] == skierId);
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 8),
+          constraints: BoxConstraints(maxHeight: 60),
+          margin: const EdgeInsets.only(bottom: 2),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -172,12 +173,16 @@ class SkierListTablet extends StatelessWidget {
                 showSkierInfo(context, skierId);
               },
               child: ListTile(
-                contentPadding: const EdgeInsets.all(12),
+                contentPadding: const EdgeInsets.all(3),
+                visualDensity: const VisualDensity(
+                  vertical: -4,
+                  horizontal: -4,
+                ),
                 leading: Container(
-                  height: 45,
-                  width: 45,
+                  height: 40,
+                  width: 40,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.2),
                       width: 1,
@@ -191,51 +196,33 @@ class SkierListTablet extends StatelessWidget {
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                     child: flagWidget(skierData['country']),
                   ),
                 ),
-                title: AutoSizeText(
+                title: Text(
                   skierData['name'] ?? "Unknown",
-                  maxLines: 1,
-                  minFontSize: 12,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16, // Max font size
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-                subtitle: Row(
-                  children: [
-                    Text(
-                      skierData['country']?.toUpperCase() ?? "Unknown",
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 12,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      "${skierData['totalPoints']} P",
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 12,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
+                subtitle: Text(
+                  skierData['country']?.toUpperCase() ?? "Unknown",
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 12,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
+                      constraints:
+                          const BoxConstraints(minWidth: 65, maxWidth: 65),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -255,13 +242,15 @@ class SkierListTablet extends StatelessWidget {
                           width: 1,
                         ),
                       ),
-                      child: Text(
-                        "${skierData['price']} M",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          letterSpacing: 0.5,
+                      child: Center(
+                        child: Text(
+                          "${skierData['price']}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ),

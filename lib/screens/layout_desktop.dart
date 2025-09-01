@@ -25,11 +25,10 @@ class LayoutDesktop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: CompactAppBar(
         teamName: teamName,
         gameWeek: gameWeek,
         deadline: deadline,
-        backArrow: false,
       ),
       body: Stack(
         children: [
@@ -54,7 +53,9 @@ class LayoutDesktop extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           totalTeamPointsWidget(context),
+                          SizedBox(width: 18),
                           budgetWidget(context),
+                          SizedBox(width: 18),
                           weekPoints(context),
                         ],
                       ),
@@ -95,13 +96,14 @@ class LayoutDesktop extends StatelessWidget {
                                 ),
 
                                 // Spara-knapp
-                                Row(
+                                Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     SizedBox(
                                       width: 200,
                                       child: saveTeam(context),
                                     ),
+                                    showUpcomingEvents(context, 500.0)
                                   ],
                                 ),
                               ],
@@ -112,9 +114,9 @@ class LayoutDesktop extends StatelessWidget {
                           Container(
                             width: 300,
                             padding: const EdgeInsets.all(8),
-                            child: Column(
+                            child: const Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [showUpcomingEvents(context)],
+                              children: [Text("")],
                             ),
                           ),
                         ],

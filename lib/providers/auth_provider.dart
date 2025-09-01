@@ -1,11 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:real_fls/main.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'team_provider.dart';
+import 'package:provider/provider.dart';
 
 class AuthenticProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Controllers som hanteras av providern
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -17,30 +18,43 @@ class AuthenticProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text,
+      final email = emailController.text.trim();
+      final password = passwordController.text.trim();
+
+      UserCredential cred = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
-      // Vid lyckad inloggning, navigera till HomeScreen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MyHome()),
-      );
-    } on FirebaseAuthException catch (e) {
-      String message = '';
-      if (e.code == 'user-not-found') {
-        message = 'Användare hittades inte.';
-      } else if (e.code == 'wrong-password') {
-        message = 'Fel lösenord.';
-      } else {
-        message = 'Error: ${e.message}';
+
+      print("Hämtar teamdata efter inloggning...");
+      await context.read<TeamProvider>().getLoginData();
+
+      // Navigera till debug screen
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MyHome()),
+        );
       }
+    } catch (e) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+          .showSnackBar(SnackBar(content: Text('Login error: $e')));
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> logout(BuildContext context) async {
+    await _auth.signOut();
+    context.read<TeamProvider>().clearLoginData();
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
   Future<void> register(BuildContext context) async {
@@ -75,12 +89,5 @@ class AuthenticProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
   }
 }

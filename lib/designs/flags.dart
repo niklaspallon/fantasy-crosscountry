@@ -12,7 +12,7 @@ Widget flagWidget(String countryName) {
     "france": "FR",
     "italy": "IT",
     "switzerland": "CH",
-    "united states": "US",
+    "usa": "US",
     "russia": "RU",
     "poland": "PL",
     "united kingdom": "gbr",

@@ -7,7 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:real_fls/screens/admin_new_week_screen.dart';
 import 'package:real_fls/screens/admin_remove_data.dart';
 import '../providers/team_provider.dart';
-import '../handlers/updatePoints.dart';
+import '../handlers/update_points.dart';
 import '../services/fetch_from_fis.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
@@ -290,14 +290,22 @@ class _AddCompetitionsResultsState extends State<AddCompetitionsResultsWidget> {
 // Skicka listan till dialogen
                 showResultsDialog(context, resultLines);
 
-                await updateAllTeamsWeeklyPoints(true);
                 await syncSkierPointsToWeeklyTeams();
                 await updateAllSkiersTotalPoints();
                 await updateAllTeamsWeeklyPoints(true);
                 await updateAllTeamsTotalPoints();
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Alla Funktioner har körts")),
+                  SnackBar(
+                    content: const Text("Alla Funktioner har körts"),
+                    duration: const Duration(days: 1),
+                    action: SnackBarAction(
+                      label: "Stäng",
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      },
+                    ),
+                  ),
                 );
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(

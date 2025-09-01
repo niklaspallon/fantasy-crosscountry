@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:real_fls/handlers/week_handler.dart';
 import 'package:real_fls/screens/mini_league_screen.dart';
 import '../main.dart';
 import 'login_screen.dart';
 import 'leaderboard_screen.dart';
 import 'admin_screen.dart';
 import '../designs/appbar_design.dart';
+import '../screens/activity_log_screen.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 
 class LayoutMobile extends StatelessWidget {
   final String teamName;
@@ -88,7 +91,7 @@ class LayoutMobile extends StatelessWidget {
                         child: saveTeam(context),
                       ),
                       const SizedBox(height: 16),
-                      showUpcomingEvents(context),
+                      showUpcomingEvents(context, 400.0),
                       const SizedBox(height: 24),
                     ],
                   ),

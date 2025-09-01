@@ -57,7 +57,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("assets/background.jpg"),
+            image: AssetImage("assets/skitracks_back.jpg"),
             fit: BoxFit.cover,
           ),
         ),

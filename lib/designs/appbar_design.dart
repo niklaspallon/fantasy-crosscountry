@@ -161,11 +161,13 @@ class CompactAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
-                    Icons.timer,
-                    size: 12,
-                    color: Colors.white70,
-                  ),
+                  const Text("Deadline:",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.5,
+                      )),
                   const SizedBox(width: 4),
                   Text(
                     deadline ?? "",

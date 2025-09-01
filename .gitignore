@@ -82,3 +82,4 @@ DerivedData/
 # Firebase
 .firebase/
 firebase-debug.log
+firebase_options.dart

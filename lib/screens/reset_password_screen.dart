@@ -61,50 +61,56 @@ class ResetPasswordScreen extends StatelessWidget {
                   const SizedBox(height: 10),
 
                   // 🔹 Email TextField
-                  TextField(
-                    controller: authProvider.emailController,
-                    style: const TextStyle(color: Colors.white),
-                    cursorColor: Colors.white,
-                    decoration: InputDecoration(
-                      prefixIcon:
-                          const Icon(Icons.email, color: Colors.white70),
-                      labelText: 'Email',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.4),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
+                  Container(
+                    constraints: BoxConstraints(maxWidth: 400),
+                    child: TextField(
+                      controller: authProvider.emailController,
+                      style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      decoration: InputDecoration(
+                        prefixIcon:
+                            const Icon(Icons.email, color: Colors.white70),
+                        labelText: 'Email',
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.4),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 15),
-                  HoverButton(
-                    onPressed: () async {
-                      final email = authProvider.emailController.text.trim();
-                      if (email.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Email")),
-                        );
-                        return;
-                      }
+                  Container(
+                    constraints: BoxConstraints(maxWidth: 400),
+                    child: HoverButton(
+                      onPressed: () async {
+                        final email = authProvider.emailController.text.trim();
+                        if (email.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Email")),
+                          );
+                          return;
+                        }
 
-                      try {
-                        await FirebaseAuth.instance
-                            .sendPasswordResetEmail(email: email);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text("Reset link sent to your email")),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("⚠️ Fel: ${e.toString()}")),
-                        );
-                      }
-                    },
-                    child: const Text(
-                      'Send Reset Link',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                        try {
+                          await FirebaseAuth.instance
+                              .sendPasswordResetEmail(email: email);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text("Reset link sent to your email")),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("⚠️ Fel: ${e.toString()}")),
+                          );
+                        }
+                      },
+                      child: const Text(
+                        'Send Reset Link',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
                     ),
                   ),
                 ],

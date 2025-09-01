@@ -4,7 +4,7 @@ import 'package:real_fls/handlers/team_details_handler.dart';
 import 'package:real_fls/handlers/week_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/team_provider.dart';
-import '../handlers/updatePoints.dart';
+import '../handlers/update_points.dart';
 import '../services/fetch_from_fis.dart';
 import 'package:intl/intl.dart';
 import '../screens/admin_screen.dart';
@@ -419,10 +419,21 @@ class _NewWeekState extends State<NewWeekWidget> {
                       context, location, fullDeadline, competitions);
                   if (!confirmed) return;
 
-                  incrementWeek(context, location, fullDeadline, competitions);
-
+                  await incrementWeek(
+                      context, location, fullDeadline, competitions);
                   ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("✅ Ny spelvecka skapad!")));
+                    SnackBar(
+                      content:
+                          const Text("Ny vecka skapad!, alla funktioner klara"),
+                      duration: const Duration(days: 1),
+                      action: SnackBarAction(
+                        label: "Stäng",
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        },
+                      ),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.rocket_launch),
                 label: const Text("Skapa ny vecka"),

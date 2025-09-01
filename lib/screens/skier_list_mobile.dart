@@ -18,18 +18,19 @@ class SkierListMobile extends StatelessWidget {
       children: [
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 3),
             itemCount: skiers.length,
             itemBuilder: (context, index) {
               var skierData = skiers[index];
               String skierId = skierData['id'];
               bool alreadyAdded = context
                   .watch<TeamProvider>()
-                  .userTeam
+                  .userTeam!
                   .any((athlete) => athlete['id'] == skierId);
 
               return Container(
-                margin: const EdgeInsets.only(bottom: 8),
+                constraints: BoxConstraints(maxHeight: 60),
+                margin: const EdgeInsets.only(bottom: 2),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -63,10 +64,14 @@ class SkierListMobile extends StatelessWidget {
                       showSkierInfo(context, skierId);
                     },
                     child: ListTile(
-                      contentPadding: const EdgeInsets.all(12),
+                      contentPadding: const EdgeInsets.all(3),
+                      visualDensity: const VisualDensity(
+                        vertical: -4,
+                        horizontal: -4,
+                      ),
                       leading: Container(
-                        height: 50,
-                        width: 50,
+                        height: 40,
+                        width: 40,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
@@ -90,7 +95,7 @@ class SkierListMobile extends StatelessWidget {
                         skierData['name'] ?? "Unknown",
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
                         ),
@@ -107,10 +112,8 @@ class SkierListMobile extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
+                            constraints: const BoxConstraints(
+                                minWidth: 65, maxWidth: 65),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
@@ -130,13 +133,15 @@ class SkierListMobile extends StatelessWidget {
                                 width: 1,
                               ),
                             ),
-                            child: Text(
-                              "${skierData['price']} M",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                letterSpacing: 0.5,
+                            child: Center(
+                              child: Text(
+                                "${skierData['price']}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
                           ),

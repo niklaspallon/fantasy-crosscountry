@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'week_handler.dart';
+import 'firebase_batch_helper.dart';
 
 Future<void> updateAllSkiersTotalPoints() async {
+  Stopwatch stopwatch = Stopwatch()..start();
   print("updateAllSkiersTotalPoints körs...");
   try {
     FirebaseFirestore db = FirebaseFirestore.instance;
@@ -13,7 +15,7 @@ Future<void> updateAllSkiersTotalPoints() async {
       return;
     }
 
-    WriteBatch batch = db.batch();
+    List<BatchOperation> operations = [];
 
     for (var skierDoc in skiersSnapshot.docs) {
       String skierId = skierDoc.id;
@@ -50,53 +52,58 @@ Future<void> updateAllSkiersTotalPoints() async {
       }
 
       if (newPoints > 0) {
-        // 🔹 Lägg till poäng till totalPoints
-        batch.update(
-          db.collection('SkiersDb').doc(skierId),
-          {'totalPoints': FieldValue.increment(newPoints)},
-        );
+        operations.add((batch) {
+          batch.update(db.collection('SkiersDb').doc(skierId),
+              {'totalPoints': FieldValue.increment(newPoints)});
+        });
 
-        // 🔹 Uppdatera countedInTotal för denna vecka
-        batch.update(
-          weekRef,
-          {
-            'countedInTotal': FieldValue.arrayUnion(newlyCounted),
-          },
-        );
-      } else {}
+        operations.add((batch) {
+          batch.update(
+              weekRef, {'countedInTotal': FieldValue.arrayUnion(newlyCounted)});
+        });
+      }
     }
-
-    await batch.commit();
+    await commitInBatches(db, operations);
+    print("updateAllSkiersTotalPoints tog $stopwatch.elapsedMilliseconds");
   } catch (e) {
     print("❌ Fel vid uppdatering av totalpoäng: $e");
   }
 }
 
 Future<List<String>> updateAllTeamsTotalPoints() async {
+  final stopwatch = Stopwatch()..start();
   print("updateAllTeamsTotalPoints körs...");
   List<String> feedback = [];
 
   try {
-    FirebaseFirestore db = FirebaseFirestore.instance;
+    final db = FirebaseFirestore.instance;
     int currentWeek = await getCurrentWeek();
 
-    QuerySnapshot teamsSnapshot = await db.collection('teams').get();
+    // 🔹 Hämta alla lag
+    final teamsSnapshot = await db.collection('teams').get();
     if (teamsSnapshot.docs.isEmpty) {
       feedback.add("❌ Inga lag hittades.");
       return feedback;
     }
 
-    WriteBatch batch = db.batch();
-
-    for (var teamDoc in teamsSnapshot.docs) {
-      String teamId = teamDoc.id;
-
-      DocumentSnapshot weeklyTeamDoc = await db
+    // 🔹 Hämta alla weeklyTeams parallellt
+    final weeklyDocsFutures = teamsSnapshot.docs.map((teamDoc) {
+      return db
           .collection('teams')
-          .doc(teamId)
+          .doc(teamDoc.id)
           .collection('weeklyTeams')
           .doc("week$currentWeek")
           .get();
+    }).toList();
+
+    final weeklyDocs = await Future.wait(weeklyDocsFutures);
+
+    List<BatchOperation> operations = [];
+
+    for (int i = 0; i < teamsSnapshot.docs.length; i++) {
+      final teamDoc = teamsSnapshot.docs[i];
+      final teamId = teamDoc.id;
+      final weeklyTeamDoc = weeklyDocs[i];
 
       if (!weeklyTeamDoc.exists) {
         feedback.add(
@@ -104,48 +111,54 @@ Future<List<String>> updateAllTeamsTotalPoints() async {
         continue;
       }
 
-      Map<String, dynamic> weekData =
-          weeklyTeamDoc.data() as Map<String, dynamic>;
+      final weekData = weeklyTeamDoc.data() as Map<String, dynamic>;
       int weeklyPoints = weekData['weeklyPoints'] ?? 0;
       int alreadyCounted = weekData['weeklyPointsCountedInTotal'] ?? 0;
 
       int pointsToAdd = weeklyPoints - alreadyCounted;
 
-      // Hämta nuvarande totalPoints för feedback
-
       if (pointsToAdd > 0) {
-        batch.update(db.collection('teams').doc(teamId), {
-          'totalPoints': FieldValue.increment(pointsToAdd),
+        operations.add((batch) {
+          batch.update(db.collection('teams').doc(teamId), {
+            'totalPoints': FieldValue.increment(pointsToAdd),
+          });
         });
 
-        batch.update(
-            db
-                .collection('teams')
-                .doc(teamId)
-                .collection('weeklyTeams')
-                .doc("week$currentWeek"),
-            {
-              'weeklyPointsCountedInTotal': alreadyCounted + pointsToAdd,
-            });
+        operations.add((batch) {
+          batch.update(
+              db
+                  .collection('teams')
+                  .doc(teamId)
+                  .collection('weeklyTeams')
+                  .doc("week$currentWeek"),
+              {
+                'weeklyPointsCountedInTotal': alreadyCounted + pointsToAdd,
+              });
+        });
 
-        feedback.add("Redan räknat denna vecka = $alreadyCounted, "
-            "Nya poäng som läggs till = $pointsToAdd");
+        feedback.add(
+            "Lag $teamId: Redan räknat = $alreadyCounted, nya poäng = $pointsToAdd");
       } else {
         feedback.add(
-            "⚠️ Lag $teamId:inga nya poäng. Veckopoäng = $weeklyPoints, Redan räknade poäng för veckan = $alreadyCounted");
+            "⚠️ Lag $teamId: inga nya poäng. Veckopoäng = $weeklyPoints, Redan räknade poäng = $alreadyCounted");
       }
     }
 
-    await batch.commit();
+    // 🔹 Commit i batches
+    await commitInBatches(db, operations);
+
     feedback.add("Funktion kördes som den skulle");
   } catch (e) {
     feedback.add("❌ Fel vid uppdatering av alla lags totalpoäng: $e");
   }
 
+  stopwatch.stop();
+  print("⏱️ updateAllTeamsTotalPoints tog ${stopwatch.elapsedMilliseconds} ms");
   return feedback;
 }
 
 Future<List<String>> undoAllTeamsTotalPointsWithWeekly() async {
+  //kvar
   print("undoAllTeamsTotalPointsWithWeekly körs...");
   List<String> feedback = [];
 
@@ -159,7 +172,7 @@ Future<List<String>> undoAllTeamsTotalPointsWithWeekly() async {
       return feedback;
     }
 
-    WriteBatch batch = db.batch();
+    List<BatchOperation> operations = [];
 
     for (var teamDoc in teamsSnapshot.docs) {
       String teamId = teamDoc.id;
@@ -185,24 +198,27 @@ Future<List<String>> undoAllTeamsTotalPointsWithWeekly() async {
       if (alreadyCounted > 0) {
         feedback.add("🔻 Lag $teamId: -$alreadyCounted poäng togs bort");
 
-        // Minska totalPoints
-        batch.update(
-          db.collection('teams').doc(teamId),
-          {'totalPoints': FieldValue.increment(-alreadyCounted)},
-        );
+        operations.add((batch) {
+          batch.update(
+            db.collection('teams').doc(teamId),
+            {'totalPoints': FieldValue.increment(-alreadyCounted)},
+          );
+        });
 
-        // Nollställ counted-in-total
-        batch.update(
-          weeklyRef,
-          {'weeklyPointsCountedInTotal': 0},
-        );
+        operations.add((batch) {
+          batch.update(
+            weeklyRef,
+            {'weeklyPointsCountedInTotal': 0},
+          );
+        });
       } else {
         feedback
             .add("Lag $teamId hade inga poäng räknade för vecka $currentWeek.");
       }
     }
 
-    await batch.commit();
+    // 🔹 Commita i batchar, fyll varje batch upp till 500 operationer först
+    await commitInBatches(db, operations);
     feedback.add(
         "✅ Alla lag fick sina inräknade poäng återställda för vecka $currentWeek!");
   } catch (e) {
@@ -213,37 +229,46 @@ Future<List<String>> undoAllTeamsTotalPointsWithWeekly() async {
 }
 
 Future<void> updateAllTeamsWeeklyPoints(bool restoringCachedLeaderboard) async {
+  final stopwatch = Stopwatch()..start();
   print("updateAllTeamsWeeklyPoints körs...");
-  try {
-    FirebaseFirestore db = FirebaseFirestore.instance;
-    int currentWeek = await getCurrentWeek();
 
-    QuerySnapshot teamsSnapshot = await db.collection('teams').get();
+  try {
+    final db = FirebaseFirestore.instance;
+    final currentWeek = await getCurrentWeek();
+
+    final teamsSnapshot = await db.collection('teams').get();
     if (teamsSnapshot.docs.isEmpty) {
       print("❌ Inga lag hittades.");
       return;
     }
 
-    WriteBatch batch = db.batch();
+    List<BatchOperation> operations = [];
 
-    for (var teamDoc in teamsSnapshot.docs) {
-      String teamId = teamDoc.id;
-
-      DocumentSnapshot weeklyTeamDoc = await db
+    // 🔹 Hämta alla weeklyTeams-dokument parallellt
+    final weeklyDocsFutures = teamsSnapshot.docs.map((teamDoc) {
+      return db
           .collection('teams')
-          .doc(teamId)
+          .doc(teamDoc.id)
           .collection('weeklyTeams')
           .doc("week$currentWeek")
           .get();
+    }).toList();
 
-      if (!weeklyTeamDoc.exists) {
+    final weeklyDocs = await Future.wait(weeklyDocsFutures);
+
+    for (int i = 0; i < teamsSnapshot.docs.length; i++) {
+      final teamDoc = teamsSnapshot.docs[i];
+      final teamId = teamDoc.id;
+      final weeklyDoc = weeklyDocs[i];
+
+      if (!weeklyDoc.exists) {
         print("⚠️ Laget $teamId har inget registrerat för vecka $currentWeek.");
         continue;
       }
 
-      final data = weeklyTeamDoc.data() as Map<String, dynamic>;
-      final List<dynamic> skiers = data['skiers'] ?? [];
-      final String? captainId = data['captain']?.toString();
+      final data = weeklyDoc.data() as Map<String, dynamic>;
+      final skiers = data['skiers'] as List<dynamic>? ?? [];
+      final captainId = data['captain']?.toString();
 
       if (skiers.isEmpty) {
         print("⚠️ Laget $teamId har inga åkare vecka $currentWeek.");
@@ -251,55 +276,59 @@ Future<void> updateAllTeamsWeeklyPoints(bool restoringCachedLeaderboard) async {
       }
 
       int totalTeamWeeklyPoints = 0;
-
       for (var skier in skiers) {
         if (skier is Map<String, dynamic>) {
           int points = skier['totalWeeklyPoints'] ?? 0;
-          String skierId = skier['skierId'] ?? '';
-
-          if (skierId == captainId) {
-            points *= 2;
-          }
-
+          if (skier['skierId'] == captainId) points *= 2;
           totalTeamWeeklyPoints += points;
         }
       }
 
       if (!restoringCachedLeaderboard) {
-        //för att inte köra totalPointsSyncDecrease vid återställning från cache
-        batch.set(
-          db
-              .collection('teams')
-              .doc(teamId)
-              .collection('weeklyTeams')
-              .doc("week$currentWeek"),
-          {
-            'weeklyPoints': totalTeamWeeklyPoints,
-            'weeklyPointsCountedInTotal': totalTeamWeeklyPoints,
-          },
-          SetOptions(merge: true),
-        );
+        operations.add((batch) {
+          batch.set(
+            db
+                .collection('teams')
+                .doc(teamId)
+                .collection('weeklyTeams')
+                .doc("week$currentWeek"),
+            {
+              'weeklyPoints': totalTeamWeeklyPoints,
+              'weeklyPointsCountedInTotal': totalTeamWeeklyPoints,
+            },
+            SetOptions(merge: true),
+          );
+        });
       } else {
-        batch.set(
-          db
-              .collection('teams')
-              .doc(teamId)
-              .collection('weeklyTeams')
-              .doc("week$currentWeek"),
-          {
-            'weeklyPoints': totalTeamWeeklyPoints,
-          },
-          SetOptions(merge: true),
-        );
+        operations.add((batch) {
+          batch.set(
+            db
+                .collection('teams')
+                .doc(teamId)
+                .collection('weeklyTeams')
+                .doc("week$currentWeek"),
+            {
+              'weeklyPoints': totalTeamWeeklyPoints,
+            },
+            SetOptions(merge: true),
+          );
+        });
       }
     }
 
-    await batch.commit();
+    // 🔹 Kör alla operationer i batchar
+    await commitInBatches(db, operations);
 
     if (restoringCachedLeaderboard) {
-      print("$restoringCachedLeaderboard");
-      await totalPointsSyncDecrease(); // Denna ska inte köras vid återställning från cache leadboard
+      print(
+          "Kör inte totalpointsdecrease då boleanen är, $restoringCachedLeaderboard.");
+    } else {
+      await totalPointsSyncDecrease();
     }
+
+    stopwatch.stop();
+    print(
+        "⏱ updateAllTeamsWeeklyPoints klar på ${stopwatch.elapsedMilliseconds} ms");
   } catch (e) {
     print("❌ Fel vid uppdatering av alla lags veckopoäng: $e");
   }
@@ -308,6 +337,7 @@ Future<void> updateAllTeamsWeeklyPoints(bool restoringCachedLeaderboard) async {
 Future<Map<String, int>> getAllSkiersPoints(
     List<String> skierIds, int weekNumber) async {
   print("getAllSkiersPoints körs för vecka $weekNumber...");
+  Stopwatch stopwatch = Stopwatch()..start();
   Map<String, int> skierPointsMap = {};
 
   try {
@@ -336,6 +366,7 @@ Future<Map<String, int>> getAllSkiersPoints(
       }
 
       skierPointsMap[skierIds[i]] = totalWeeklyPoints;
+      print("getAllSkiersPoints tog ${stopwatch.elapsedMilliseconds} ms");
     }
   } catch (e) {
     print("❌ Error fetching totalWeeklyPoints for skiers: $e");
@@ -344,11 +375,18 @@ Future<Map<String, int>> getAllSkiersPoints(
   return skierPointsMap;
 }
 
-Future<void> syncSkierPointsToWeeklyTeams() async {
+Future<void> syncSkierPointsToWeeklyTeams([int? nextWeek]) async {
+  Stopwatch stopwatch = Stopwatch()..start();
   print("syncSkierPointsToWeeklyTeams körs...");
   final db = FirebaseFirestore.instance;
-  int weekNumber = await getCurrentWeek();
-
+  int weekNumber;
+  if (nextWeek != null) {
+    weekNumber = nextWeek;
+    print("➡️ Syncar för nästa vecka: $weekNumber");
+  } else {
+    weekNumber = await getCurrentWeek();
+    print("➡️ Syncar för nuvarande vecka: $weekNumber");
+  }
   try {
     // 🔹 1. Hämta alla lag
     final teamsSnapshot = await db.collection('teams').get();
@@ -374,7 +412,7 @@ Future<void> syncSkierPointsToWeeklyTeams() async {
         await getAllSkiersPoints(allSkierIds.toList(), weekNumber);
 
     // 🔹 4. Uppdatera alla lag med poängen från kartan
-    final WriteBatch batch = db.batch();
+    List<BatchOperation> operations = [];
     int updatedTeams = 0;
 
     for (var teamDoc in teamsSnapshot.docs) {
@@ -393,19 +431,23 @@ Future<void> syncSkierPointsToWeeklyTeams() async {
         }
       }
 
-      batch.update(weeklyRef, {'skiers': skiers});
+      operations.add((batch) {
+        batch.update(weeklyRef, {'skiers': skiers});
+      });
       updatedTeams++;
     }
 
-    await batch.commit();
+    await commitInBatches(db, operations);
     print(
-        "🎉 Alla lags poäng synkade med optimerad batch för vecka $weekNumber! Uppdaterade lag: $updatedTeams");
+        "syncSkierPointsToWeeklyTeams tog ${stopwatch.elapsedMilliseconds} ms");
   } catch (e) {
-    print("❌ Fel vid optimerad synkning av poäng: $e");
+    print(
+        "❌ Fel vid optimerad synkning av poäng: $e i syncSkierPointsToWeeklyTeams");
   }
 }
 
 Future<void> restoreTeamPointsFromCachedLeaderboard(int weekNumber) async {
+  // tror denna är anpassad för batch
   final db = FirebaseFirestore.instance;
   final cachedRef =
       db.collection('cachedData').doc('leaderboard_week$weekNumber');
@@ -417,7 +459,7 @@ Future<void> restoreTeamPointsFromCachedLeaderboard(int weekNumber) async {
   }
 
   final List<dynamic> cachedTeams = cachedDoc.get('teams') ?? [];
-  WriteBatch batch = db.batch();
+  List<BatchOperation> operations = [];
 
   for (var cachedTeam in cachedTeams) {
     final String teamId = cachedTeam['teamId'];
@@ -426,13 +468,15 @@ Future<void> restoreTeamPointsFromCachedLeaderboard(int weekNumber) async {
 
     final teamRef = db.collection('teams').doc(teamId);
 
-    batch.update(teamRef, {
-      'totalPoints': totalPoints,
-      'weeklyPoints': weeklyPoints,
+    operations.add((batch) {
+      batch.update(teamRef, {
+        'totalPoints': totalPoints,
+        'weeklyPoints': weeklyPoints,
+      });
     });
   }
 
-  await batch.commit();
+  await commitInBatches(db, operations);
   print("✅ Återställde enbart poäng från cache för vecka $weekNumber.");
   resetWeekPointsData(
       false); //ÄR ENDAST FALSE NÄR MAN RESETAR FRÅN EN GAMMAL LEADERBOARD
@@ -441,6 +485,7 @@ Future<void> restoreTeamPointsFromCachedLeaderboard(int weekNumber) async {
 }
 
 Future<String> resetWeekPointsData(bool restoringCachedLeaderboard) async {
+  //tror denna är anpassad för batch
   print("resetWeekPointsData körs...");
   try {
     int currentWeek = await getCurrentWeek();
@@ -449,7 +494,7 @@ Future<String> resetWeekPointsData(bool restoringCachedLeaderboard) async {
 
     // 🔹 1. Radera veckodata för alla skidåkare
     final skiersSnapshot = await db.collection('SkiersDb').get();
-    WriteBatch skierBatch = db.batch();
+    List<BatchOperation> skierOps = [];
 
     for (var skierDoc in skiersSnapshot.docs) {
       final skierId = skierDoc.id;
@@ -480,22 +525,23 @@ Future<String> resetWeekPointsData(bool restoringCachedLeaderboard) async {
 
         if (pointsToRemove > 0) {
           final skierRef = db.collection('SkiersDb').doc(skierId);
-          skierBatch.update(skierRef, {
-            'totalPoints': FieldValue.increment(-pointsToRemove),
+          skierOps.add((batch) {
+            batch.update(skierRef, {
+              'totalPoints': FieldValue.increment(-pointsToRemove),
+            });
           });
         }
       }
 
       // 🔹 Till sist: ta bort hela veckodokumentet
-      skierBatch.delete(weekRef);
+      skierOps.add((batch) => batch.delete(weekRef));
     }
 
-    await skierBatch.commit();
-    print("🧹 Rensade weeklyResults för vecka $currentWeek");
+    await commitInBatches(db, skierOps);
 
     // 🔹 2. Rensa poäng från alla lag för den veckan
     final teamsSnapshot = await db.collection('teams').get();
-    WriteBatch teamBatch = db.batch();
+    List<BatchOperation> teamOps = [];
 
     int affectedTeams = 0;
 
@@ -516,13 +562,11 @@ Future<String> resetWeekPointsData(bool restoringCachedLeaderboard) async {
         skier['countedCompetitions'] = [];
       }
 
-      teamBatch.update(weeklyRef, {
-        'skiers': skiers,
-      });
+      teamOps.add((batch) => batch.update(weeklyRef, {'skiers': skiers}));
       affectedTeams++;
     }
 
-    await teamBatch.commit();
+    await commitInBatches(db, teamOps);
     await updateAllTeamsWeeklyPoints(
         restoringCachedLeaderboard); // boolean för att inte köra totalPointsSyncDecrease vid återställning från cache
     print("🧹 Rensade weeklyTeams-data för vecka $currentWeek");
@@ -535,6 +579,7 @@ Future<String> resetWeekPointsData(bool restoringCachedLeaderboard) async {
 }
 
 Future<List<String>> totalPointsSyncDecrease() async {
+  //tror denna är anpassad för batch
   print("totalPointsSyncDecrease körs...");
   List<String> feedback = [];
   try {
@@ -546,8 +591,7 @@ Future<List<String>> totalPointsSyncDecrease() async {
       feedback.add("Inga lag hittades.");
       return feedback;
     }
-
-    WriteBatch batch = db.batch();
+    List<BatchOperation> operations = [];
 
     for (var teamDoc in teamsSnapshot.docs) {
       String teamId = teamDoc.id;
@@ -579,23 +623,27 @@ Future<List<String>> totalPointsSyncDecrease() async {
             " Lag $teamId: -$diff poäng justeras (från $alreadyCounted → $weeklyPoints)");
 
         // Minska totalPoints med mellanskillnaden
-        batch.update(
-          db.collection('teams').doc(teamId),
-          {'totalPoints': FieldValue.increment(-diff)},
-        );
+        // Lägg till operationer i listan
+        operations.add((batch) {
+          batch.update(
+            db.collection('teams').doc(teamId),
+            {'totalPoints': FieldValue.increment(-diff)},
+          );
+        });
 
-        // Uppdatera countedInTotal så att den matchar nuvarande weeklyPoints
-        batch.update(
-          weeklyRef,
-          {'weeklyPointsCountedInTotal': weeklyPoints},
-        );
+        operations.add((batch) {
+          batch.update(
+            weeklyRef,
+            {'weeklyPointsCountedInTotal': weeklyPoints},
+          );
+        });
       } else {
         feedback.add(
             "Lag $teamId behövde ingen justering ($weeklyPoints / $alreadyCounted).");
       }
     }
 
-    await batch.commit();
+    await commitInBatches(db, operations);
     feedback.add("✅ Kontroll och justering av minskade veckopoäng klar!");
   } catch (e) {
     feedback.add("❌ Fel vid kontroll/justering av minskade veckopoäng: $e");
@@ -605,6 +653,7 @@ Future<List<String>> totalPointsSyncDecrease() async {
 }
 
 Future<String> undoCompetitionPoints(String competitionId) async {
+  //tror denna är anpassad för batch
   print("undoCompetitionPoints körs");
   try {
     FirebaseFirestore db = FirebaseFirestore.instance;
@@ -621,7 +670,7 @@ Future<String> undoCompetitionPoints(String competitionId) async {
         .toList();
 
     List<DocumentSnapshot> weekDocs = await Future.wait(weekDocsFutures);
-    WriteBatch skierBatch = db.batch();
+    List<BatchOperation> operations = [];
 
     int affectedSkiers = 0;
     int totalPointsRemoved = 0;
@@ -656,10 +705,12 @@ Future<String> undoCompetitionPoints(String competitionId) async {
         );
 
         final weekRef = weekDoc.reference;
-        skierBatch.update(weekRef, {
-          'competitions': competitions,
-          'countedCompetitions': counted,
-          'totalWeeklyPoints': newTotal,
+        operations.add((batch) {
+          batch.update(weekRef, {
+            'competitions': competitions,
+            'countedCompetitions': counted,
+            'totalWeeklyPoints': newTotal,
+          });
         });
 
         // 🔹 Dra bort från totalPoints om den var räknad
@@ -668,12 +719,14 @@ Future<String> undoCompetitionPoints(String competitionId) async {
             int removedPoints = (removedComp['points'] as num).toInt();
             totalPointsRemoved += removedPoints;
             final skierRef = db.collection('SkiersDb').doc(skierId);
-            skierBatch.update(skierRef, {
-              'totalPoints': FieldValue.increment(-removedPoints),
+            operations.add((batch) {
+              batch.update(skierRef,
+                  {'totalPoints': FieldValue.increment(-removedPoints)});
             });
+
             countedInTotal.remove(competitionId);
-            skierBatch.update(weekRef, {
-              'countedInTotal': countedInTotal,
+            operations.add((batch) {
+              batch.update(weekRef, {'countedInTotal': countedInTotal});
             });
           }
         }
@@ -687,14 +740,13 @@ Future<String> undoCompetitionPoints(String competitionId) async {
               List.from(skierDoc.get('recentPlacements') ?? []);
 
           recentPlacements.remove(removedPlacement);
-          skierBatch.update(skierRef, {
-            'recentPlacements': recentPlacements,
+          operations.add((batch) {
+            batch.update(skierRef, {'recentPlacements': recentPlacements});
           });
         }
       }
     }
-
-    await skierBatch.commit();
+    await commitInBatches(db, operations);
     return "$competitionId återställd för vecka $currentWeek.\n"
         "$affectedSkiers åkare påverkades och totalt $totalPointsRemoved poäng drogs bort från totalpoäng.";
   } catch (e) {

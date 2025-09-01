@@ -46,8 +46,10 @@ class _ChooseSkierScreen extends State<SkierScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<SkiersProvider>().fetchSkiers();
-    context.read<TeamProvider>().fetchFreeTransfers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SkiersProvider>().fetchSkiers();
+      context.read<TeamProvider>().fetchFreeTransfers();
+    });
   }
 
   @override
@@ -188,7 +190,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
             if (_showFilters ||
                 screenSize != ScreenSize.sm && screenSize != ScreenSize.md)
               Container(
-                margin: const EdgeInsets.all(16.0),
+                margin: const EdgeInsets.all(0),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -214,8 +216,7 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20.0, vertical: 12.0),
-                  child: screenSize == ScreenSize.sm ||
-                          screenSize == ScreenSize.md
+                  child: screenSize == ScreenSize.sm
                       ? Column(
                           children: [
                             Row(
@@ -272,11 +273,11 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                 ),
                                 const SizedBox(width: 16),
                                 SizedBox(
-                                    width: 200,
+                                    width: 100,
                                     child: _buildGenderFilter(context)),
                                 const SizedBox(width: 16),
                                 SizedBox(
-                                    width: 200,
+                                    width: 100,
                                     child: _buildPriceFilter(context)),
                                 const SizedBox(width: 16),
                                 _buildPriceSortButton(),
@@ -284,10 +285,16 @@ class _ChooseSkierScreen extends State<SkierScreen> {
                                 _buildResetButton(),
                               ],
                             ),
-                            const SizedBox(width: 16),
-                            _buildShowBudget(context),
-                            const SizedBox(width: 16),
-                            const TransferWidget()
+                            screenSize == ScreenSize.md
+                                ? const Text("")
+                                : Row(
+                                    children: [
+                                      const SizedBox(width: 16),
+                                      _buildShowBudget(context),
+                                      const SizedBox(width: 16),
+                                      const TransferWidget()
+                                    ],
+                                  ),
                           ],
                         ),
                 ),
@@ -325,38 +332,158 @@ class _ChooseSkierScreen extends State<SkierScreen> {
 
   Widget _buildCountrySearch(BuildContext context) {
     return Container(
-      width: 120,
+      constraints: BoxConstraints(maxHeight: 50, maxWidth: 120),
       child: SearchAnchor(
         viewHintText: "Country...",
-        headerTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
-        viewLeading: const Icon(
-          Icons.search,
-          color: Colors.white70,
-        ),
+        headerTextStyle: const TextStyle(color: Colors.white, fontSize: 16),
+        viewBackgroundColor: const Color(0xFF1A237E),
+        viewElevation: 10,
+        viewShape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        viewLeading: const SizedBox.shrink(),
         viewTrailing: [
           IconButton(
-            icon: const Icon(
-              Icons.close,
-              color: Colors.white70,
-            ),
+            icon: const Icon(Icons.close, color: Colors.white),
             onPressed: () {
               setState(() {
                 selectedCountry = "All";
-                Navigator.pop(context);
               });
+              Navigator.pop(context);
             },
           ),
         ],
-        viewBackgroundColor: const Color(0xFF1A237E),
-        viewElevation: 10,
-        viewShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+        builder: (context, controller) {
+          return InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => controller.openView(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF1A237E).withOpacity(0.9),
+                    Colors.blue[900]!.withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border:
+                    Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  selectedCountry == "All"
+                      ? const Icon(Icons.public, color: Colors.white70)
+                      : SizedBox(
+                          width: 30,
+                          height: 20,
+                          child: flagWidget(selectedCountry),
+                        ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      selectedCountry.length > 3
+                          ? selectedCountry.substring(0, 3).toUpperCase()
+                          : selectedCountry.toUpperCase(),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                  const Icon(Icons.arrow_drop_down, color: Colors.white70),
+                ],
+              ),
+            ),
+          );
+        },
+        suggestionsBuilder: (context, controller) {
+          final keyword = controller.text.toLowerCase();
+          return countries
+              .where(
+                  (c) => c.toLowerCase().contains(keyword) || keyword.isEmpty)
+              .map((c) => ListTile(
+                    leading: c == "All"
+                        ? const Icon(Icons.public, color: Colors.white70)
+                        : SizedBox(width: 30, height: 20, child: flagWidget(c)),
+                    title: Text(c[0].toUpperCase() + c.substring(1),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 16)),
+                    selected: c == selectedCountry,
+                    selectedTileColor: Colors.white.withOpacity(0.2),
+                    hoverColor: Colors.white.withOpacity(0.1),
+                    tileColor: Colors.transparent,
+                    onTap: () {
+                      setState(() {
+                        selectedCountry = c;
+                      });
+                      controller.closeView(c);
+                    },
+                  ))
+              .toList();
+        },
+      ),
+    );
+  }
+
+  Widget _buildPriceFilter(BuildContext context) {
+    return Container(
+      width: 100,
+      height: 50,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          canvasColor: const Color(0xFF1A237E),
+          popupMenuTheme: PopupMenuThemeData(
+            color: const Color(0xFF1A237E),
+            elevation: 8,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
         ),
-        builder: (BuildContext context, SearchController controller) {
-          return Container(
+        child: PopupMenuButton<String>(
+          initialValue: selectedPriceRange,
+          onSelected: (String value) {
+            setState(() {
+              selectedPriceRange = value;
+            });
+          },
+          itemBuilder: (BuildContext context) => priceRanges.map((range) {
+            return PopupMenuItem<String>(
+              value: range['label'],
+              child: Container(
+                decoration: BoxDecoration(
+                  color: range['label'] == selectedPriceRange
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.euro,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      range['label'],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+          child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -382,208 +509,30 @@ class _ChooseSkierScreen extends State<SkierScreen> {
             ),
             child: Row(
               children: [
-                selectedCountry == "All"
-                    ? const Icon(
-                        Icons.public,
-                        color: Colors.white70,
-                        size: 20,
-                      )
-                    : SizedBox(
-                        width: 30,
-                        height: 20,
-                        child: flagWidget(selectedCountry),
-                      ),
+                const Icon(
+                  Icons.attach_money,
+                  color: Colors.white70,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      controller.openView();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Text(
-                        selectedCountry.substring(0, 1).toUpperCase() +
-                            selectedCountry.substring(1),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                  child: Text(
+                    selectedPriceRange,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.search, color: Colors.white70),
-                  onPressed: () {
-                    controller.openView();
-                  },
+                const Icon(
+                  Icons.arrow_drop_down,
+                  color: Colors.white70,
                 ),
               ],
             ),
-          );
-        },
-        suggestionsBuilder:
-            (BuildContext context, SearchController controller) {
-          final keyword = controller.text.toLowerCase();
-          return countries
-              .where((country) =>
-                  country.toLowerCase().contains(keyword) || keyword.isEmpty)
-              .map((country) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    color: Colors.transparent,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: ListTile(
-                        leading: country == "All"
-                            ? const Icon(
-                                Icons.public,
-                                color: Colors.white70,
-                                size: 20,
-                              )
-                            : SizedBox(
-                                width: 30,
-                                height: 20,
-                                child: flagWidget(country),
-                              ),
-                        title: Text(
-                          country.substring(0, 1).toUpperCase() +
-                              country.substring(1),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        tileColor: Colors.transparent,
-                        hoverColor: Colors.white.withOpacity(0.1),
-                        selectedTileColor: Colors.white.withOpacity(0.2),
-                        selected: country == selectedCountry,
-                        textColor: Colors.white,
-                        onTap: () {
-                          setState(() {
-                            selectedCountry = country;
-                          });
-                          controller.closeView(country);
-                        },
-                      ),
-                    ),
-                  ))
-              .toList();
-        },
-      ),
-    );
-  }
-
-  Widget _buildPriceFilter(BuildContext context) {
-    return Container(
-      width: 100,
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1A237E).withOpacity(0.9),
-            Colors.blue[900]!.withOpacity(0.8),
-          ],
+          ),
         ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.euro,
-            color: Colors.white70,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Theme(
-            data: Theme.of(context).copyWith(
-              canvasColor: const Color(0xFF1A237E),
-              popupMenuTheme: PopupMenuThemeData(
-                color: const Color(0xFF1A237E),
-                elevation: 8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-            child: PopupMenuButton<String>(
-              initialValue: selectedPriceRange,
-              onSelected: (String value) {
-                setState(() {
-                  selectedPriceRange = value;
-                });
-              },
-              itemBuilder: (BuildContext context) => priceRanges.map((range) {
-                return PopupMenuItem<String>(
-                  value: range['label'],
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: range['label'] == selectedPriceRange
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.euro,
-                          color: Colors.white70,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          range['label'],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      selectedPriceRange,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.white70,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -637,123 +586,119 @@ class _ChooseSkierScreen extends State<SkierScreen> {
 
   Widget _buildGenderFilter(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1A237E).withOpacity(0.9),
-            Colors.blue[900]!.withOpacity(0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+      constraints: const BoxConstraints(maxHeight: 50, maxWidth: 100),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          canvasColor: const Color(0xFF1A237E),
+          popupMenuTheme: PopupMenuThemeData(
+            color: const Color(0xFF1A237E),
+            elevation: 8,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.wc,
-            color: Colors.white70,
-            size: 20,
+        ),
+        child: PopupMenuButton<String>(
+          initialValue: genderFilter,
+          onSelected: (String value) {
+            setState(() {
+              genderFilter = value;
+            });
+          },
+          position: PopupMenuPosition.under,
+          constraints: const BoxConstraints(
+            minWidth: 150,
+            maxWidth: 250,
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Theme(
-              data: Theme.of(context).copyWith(
-                canvasColor: const Color(0xFF1A237E),
-                popupMenuTheme: PopupMenuThemeData(
-                  color: const Color(0xFF1A237E),
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-              ),
-              child: PopupMenuButton<String>(
-                initialValue: genderFilter,
-                onSelected: (String value) {
-                  setState(() {
-                    genderFilter = value;
-                  });
-                },
-                position: PopupMenuPosition.under,
-                constraints: const BoxConstraints(
-                  minWidth: 150,
-                  maxWidth: 250,
-                ),
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  for (String gender in ["All", "Male", "Female"])
-                    PopupMenuItem<String>(
-                      value: gender,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: gender == genderFilter
-                              ? Colors.white.withOpacity(0.1)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 4, horizontal: 8),
-                        child: Row(
-                          children: [
-                            Icon(
-                              gender == "Male"
-                                  ? Icons.male
-                                  : gender == "Female"
-                                      ? Icons.female
-                                      : Icons.people,
-                              color: Colors.white70,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              gender,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            for (String gender in ["All", "Male", "Female"])
+              PopupMenuItem<String>(
+                value: gender,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: gender == genderFilter
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Icon(
+                        gender == "Male"
+                            ? Icons.male
+                            : gender == "Female"
+                                ? Icons.female
+                                : Icons.people,
+                        color: Colors.white70,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        genderFilter,
+                        gender,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           letterSpacing: 0.5,
                         ),
                       ),
-                      const Icon(
-                        Icons.arrow_drop_down,
-                        color: Colors.white70,
-                      ),
                     ],
                   ),
                 ),
               ),
+          ],
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1A237E).withOpacity(0.9),
+                  Colors.blue[900]!.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.wc,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    genderFilter,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_drop_down,
+                  color: Colors.white70,
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -887,7 +832,7 @@ class SearchSkierWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
+      width: 100,
       height: 50,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -911,18 +856,27 @@ class SearchSkierWidget extends StatelessWidget {
           ),
         ],
       ),
-      child: TextField(
-        cursorColor: Colors.white,
-        controller: searchController,
-        onChanged: onSearchChanged,
-        style: const TextStyle(color: Colors.white),
-        decoration: const InputDecoration(
-          hintText: 'Search skier...',
-          hintStyle: TextStyle(color: Colors.white),
-          prefixIcon: Icon(Icons.search, color: Colors.white70),
-          border: InputBorder.none,
-          contentPadding:
-              EdgeInsets.symmetric(vertical: 12), // <-- centrera innehållet
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            FocusScope.of(context).requestFocus(FocusNode());
+          },
+          child: TextField(
+            cursorColor: Colors.white,
+            controller: searchController,
+            onChanged: onSearchChanged,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Name...',
+              hintStyle:
+                  TextStyle(color: Colors.white), // <-- ändrat från white70
+              prefixIcon: Icon(Icons.search, color: Colors.white),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
         ),
       ),
     );

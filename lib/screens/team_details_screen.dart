@@ -78,6 +78,10 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen> {
     Future<List<Map<String, dynamic>>> skierFuture,
     Future<int> weekPointsFuture,
   ) {
+    DateTime? deadline = context.watch<TeamProvider>().weekDeadline;
+    bool hasDeadlinePassed =
+        deadline != null && DateTime.now().isAfter(deadline);
+
     double containerSize, nameSize, countrySize, containerHeightRatio;
 
     switch (screenSize) {
@@ -149,7 +153,7 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen> {
               Container(
                 decoration: const BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage("assets/background.jpg"),
+                    image: AssetImage("assets/skitracks_back.jpg"),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -167,7 +171,9 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen> {
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
                       ),
                       Text(
-                        "Week $selectedWeek",
+                        hasDeadlinePassed
+                            ? "Week $selectedWeek"
+                            : "Week ${selectedWeek - 1}",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -215,7 +221,7 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen> {
     return Container(
       decoration: const BoxDecoration(
         image: DecorationImage(
-          image: AssetImage("assets/background.jpg"),
+          image: AssetImage("assets/skitracks_back.jpg"),
           fit: BoxFit.cover,
         ),
       ),
@@ -231,19 +237,49 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen> {
     return Container(
       decoration: const BoxDecoration(
         image: DecorationImage(
-          image: AssetImage("assets/background.jpg"),
+          image: AssetImage("assets/skitracks_back.jpg"),
           fit: BoxFit.cover,
         ),
       ),
-      child: const Center(
-        child: Text(
-          'Inget lag hittades för denna vecka.',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: selectedWeek > 1
+                    ? () => _changeWeek(selectedWeek - 1)
+                    : null,
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+              ),
+              Text(
+                "Week $selectedWeek",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                onPressed:
+                    selectedWeek < context.read<TeamProvider>().currentWeek
+                        ? () => _changeWeek(selectedWeek + 1)
+                        : null,
+                icon: const Icon(Icons.arrow_forward, color: Colors.white),
+              ),
+            ],
           ),
-        ),
+          const Center(
+            child: Text(
+              'No data available',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

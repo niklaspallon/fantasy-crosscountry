@@ -6,7 +6,7 @@ import 'package:real_fls/handlers/week_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:real_fls/screens/admin_new_week_screen.dart';
 import '../providers/team_provider.dart';
-import '../handlers/updatePoints.dart';
+import '../handlers/update_points.dart';
 import '../services/fetch_from_fis.dart';
 import 'package:intl/intl.dart';
 import 'admin_screen.dart';
@@ -149,7 +149,7 @@ class _RemoveFromCompState extends State<RemoveCompAndPoints> {
 
     if (!confirm) return;
     await undoCompetitionPoints(selectedCompetition!);
-    await syncSkierPointsToWeeklyTeams();
+    await syncSkierPointsToWeeklyTeams(null);
     await updateAllTeamsWeeklyPoints(true);
     await totalPointsSyncDecrease();
 

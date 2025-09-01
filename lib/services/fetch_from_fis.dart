@@ -5,7 +5,7 @@ import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
 import '../handlers/week_handler.dart';
-import '../handlers/updatePoints.dart';
+import '../handlers/update_points.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;

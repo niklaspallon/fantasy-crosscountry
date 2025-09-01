@@ -41,6 +41,7 @@ dependencies:
   country_flags: any
   auto_size_text: any #för att namnet på en åkare ska få plats på en rad
   intl: any
+  flutter_phoenix: any
 
 
 

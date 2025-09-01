@@ -56,6 +56,12 @@ class TeamProvider extends ChangeNotifier {
   String _captain = "";
   String get captain => _captain;
 
+  String _savedCaptain = "";
+  String get savedCaptain => _savedCaptain;
+
+  bool _hasCaptainChanged = false;
+  bool get hasCaptainChanged => _hasCaptainChanged;
+
   List<Map<String, dynamic>> _userTeam = [];
   List<Map<String, dynamic>> get userTeam => _userTeam;
 
@@ -104,6 +110,9 @@ class TeamProvider extends ChangeNotifier {
   double _delta = 0;
   double get delta => _delta;
 
+  double _totalDelta = 0;
+  double get totalDelta => _totalDelta;
+
   int _createdGw = 1;
   int get createdGw => _createdGw;
 
@@ -118,7 +127,6 @@ class TeamProvider extends ChangeNotifier {
 
   TeamProvider() {
     fetchWeekData();
-
     checkIfUserIsAdmin(); // Kolla om användaren är admin
     _initializeOwnerId();
     fetchTeamName();
@@ -128,6 +136,7 @@ class TeamProvider extends ChangeNotifier {
     getTeamTotalPoints();
     updateUpcomingEvents();
   }
+
   int get paidTransfers {
     final transfers = _numberOfChanges - _freeTransfers;
     return transfers > 0 ? transfers : 0;
@@ -141,16 +150,51 @@ class TeamProvider extends ChangeNotifier {
   void setLocalCaptain(skierId) {
     _captain = skierId;
     print("$skierId, sattes som kapten");
+    setHasCaptainChanged();
     notifyListeners();
   }
 
-  void _initializeOwnerId() {
+  Future<void> _initializeOwnerId() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       _ownerId = currentUser.uid;
       notifyListeners();
       print("OwnerId initierat: $_ownerId");
     }
+  }
+
+  Future<void> clearLoginData() async {
+    _ownerId = "";
+    _teamName = "";
+    _userTeam = [];
+    _totalBudget = 0;
+    _firebaseBudget = 0;
+    _weekPoints = 0;
+    _teamTotalPoints = 0;
+    _currentWeek = 1;
+    _weekDeadline = null;
+    _isAdmin = false;
+    _freeTransfers = 0;
+    _unlimitedTransfers = true;
+    _delta = 0;
+    _createdGw = 1;
+    _isFullTeam = false;
+    _upcomingEvents = [];
+    _numberOfChanges = 0;
+    _hasFetchedTeamName = false;
+  }
+
+  Future<void> getLoginData() async {
+    await _initializeOwnerId();
+    await fetchTeamName();
+    await fetchWeekData();
+    await checkIfUserIsAdmin();
+    await fetchFreeTransfers();
+    await getUserTeam();
+    await getReaminingBudgetFromFb();
+    await getRemainingBudget();
+    await getTeamTotalPoints();
+    updateUpcomingEvents();
   }
 
   Future<void> checkIfUserIsAdmin() async {
@@ -271,20 +315,24 @@ class TeamProvider extends ChangeNotifier {
   }
 
   Future<void> fetchTeamName() async {
-    if (_hasFetchedTeamName)
+    if (_hasFetchedTeamName) {
+      print("Team name already fetched, skipping fetch.");
       return; // Om teamName redan hämtats, gör inget nytt anrop
-
+    }
+    print("fetch team name for ownerId: $_ownerId");
     try {
       FirebaseFirestore db = FirebaseFirestore.instance;
 
-      String uid = FirebaseAuth.instance.currentUser!.uid;
-      QuerySnapshot snapshot =
-          await db.collection('teams').where('ownerId', isEqualTo: uid).get();
+      QuerySnapshot snapshot = await db
+          .collection('teams')
+          .where('ownerId', isEqualTo: _ownerId)
+          .get();
 
       if (snapshot.docs.isNotEmpty) {
         _teamName = snapshot.docs.first.get('teamName');
-        _hasFetchedTeamName = true; // Markera att teamName har hämtats
-        notifyListeners(); // Uppdatera UI med nytt teamName
+        _hasFetchedTeamName = true;
+        notifyListeners();
+        print("✅ Team name fetched: $_teamName");
       }
     } catch (e) {
       print("❌ Error fetching team name: $e");
@@ -292,6 +340,7 @@ class TeamProvider extends ChangeNotifier {
   }
 
   Future<void> getUserTeam() async {
+    print("get userteam for $teamName");
     try {
       FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -333,6 +382,7 @@ class TeamProvider extends ChangeNotifier {
 
       // 🔹 Sätt kapten
       _captain = data['captain'] ?? '';
+      _savedCaptain = data['captain'] ?? '';
 
       // 🔹 Hämta åkardata direkt från dokumentet
       List<dynamic> skierRawList = data['skiers'] ?? [];
@@ -423,7 +473,7 @@ class TeamProvider extends ChangeNotifier {
     return skierPointsMap;
   }
 
-  void getRemainingBudget() {
+  Future<void> getRemainingBudget() async {
     double playerCost = 0;
     for (var skier in _userTeam) {
       playerCost += (skier['price'] as num).toDouble();
@@ -490,8 +540,20 @@ class TeamProvider extends ChangeNotifier {
 
     _numberOfChanges = changes;
     _hasTeamChanged = changes > 0;
-
+    print("Antal ändringar: $_numberOfChanges, Lag ändrat?: $_hasTeamChanged");
+    print("delta = $delta, totalDelta: $totalDelta");
     notifyListeners();
+  }
+
+  void setHasCaptainChanged() {
+    if (_captain != _savedCaptain) {
+      _hasCaptainChanged = true;
+      print("kaptenen är ändrad");
+    } else {
+      _hasCaptainChanged = false;
+      print("kaptenen är samma som sparad");
+      notifyListeners();
+    }
   }
 
   Future<void> removeSkierFromTeam(String skierId, BuildContext context) async {
@@ -518,56 +580,29 @@ class TeamProvider extends ChangeNotifier {
           ? (skier['marketPrice'] ?? buyPrice).toDouble()
           : double.tryParse(skier['marketPrice'].toString()) ?? buyPrice;
 
-      final double delta = marketPrice - buyPrice;
+      _delta = marketPrice - buyPrice;
+      _totalDelta += _delta;
       print(
-          "Skidåkare: ${skier['name']}, buyPrice: $buyPrice, marketPrice: $marketPrice, delta: $delta");
-
-      // Om åkaren är kapten, ta bort kaptenstatus
-      if (skierId == _captain) {
-        _captain = "";
-
-        // Uppdatera kapten i Firebase
-        FirebaseFirestore db = FirebaseFirestore.instance;
-        QuerySnapshot teamSnapshot = await db
-            .collection('teams')
-            .where('ownerId', isEqualTo: ownerId)
-            .get();
-
-        if (teamSnapshot.docs.isNotEmpty) {
-          String teamId = teamSnapshot.docs.first.id;
-          await db
-              .collection('teams')
-              .doc(teamId)
-              .collection('weeklyTeams')
-              .doc("week$_currentWeek")
-              .update({
-            'captain': null,
-          });
-        } else {
-          print("inga kaptener i laget");
-        }
-      }
+          "Skidåkare: ${skier['name']}, buyPrice: $buyPrice, marketPrice: $marketPrice, delta: $delta, totalDelta: $totalDelta");
 
       // Ta bort åkaren
       _userTeam.removeAt(skierIndex);
 
       applyBudgetDeltaLocally(delta);
       getRemainingBudget();
-      await adjustTeamBudgetFB(delta);
+      //await adjustTeamBudgetFB(delta);
 
       // Kontrollera om laget har ändrats
       updateTeamChangeStatus();
-
       notifyListeners();
-
-      // Uppdatera UI
-      notifyListeners();
+      print(
+          "Remove skier: ✅ Åkare borttagen: $skierId priser: $buyPrice ➜ $marketPrice");
     } catch (e) {
       showAlertDialog(context, "❌ Fel vid borttagning av åkare!", "$e");
     }
   }
 
-  Future<void> adjustTeamBudgetFB(double delta) async {
+  Future<void> adjustTeamBudgetFB(double totalDelta) async {
     try {
       final FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -590,12 +625,12 @@ class TeamProvider extends ChangeNotifier {
           ? (docData['budget'] as num).toDouble()
           : 100.0;
 
-      final double newBudget = (currentBudget + delta).clamp(0.0, 200.0);
+      final double newBudget = (currentBudget + totalDelta).clamp(0.0, 200.0);
 
       await docRef.update({'budget': newBudget});
       _firebaseBudget = newBudget;
-
-      print("💰 Budget justerad: $currentBudget ➜ $newBudget (delta: $delta)");
+      print(
+          "💰 Budget justerad: $currentBudget ➜ $newBudget (totaldelta: $totalDelta)");
 
       notifyListeners();
     } catch (e) {
@@ -785,6 +820,12 @@ class TeamProvider extends ChangeNotifier {
           .collection('weeklyTeams')
           .doc("week$_currentWeek");
 
+      if (!_userTeam.any((skier) => skier['id'] == _captain)) {
+        showAlertDialog(context, "Choose Captain",
+            "You must choose a captain from your team before saving.");
+        return; // Avbryt sparandet
+      }
+
       // Skapa lista med full åkardata (inklusive price!)
       List<Map<String, dynamic>> fullSkierData = _userTeam.map((skier) {
         return {
@@ -821,10 +862,12 @@ class TeamProvider extends ChangeNotifier {
 
       showSuccessDialog(
           context, "✅ Lag sparat!", "Ditt lag har sparats för $_currentWeek");
-
+      await adjustTeamBudgetFB(totalDelta);
       markTeamAsSaved();
+      _hasCaptainChanged = false;
 
       print("✅ Lag + åkardata sparat till Firestore för vecka $_currentWeek!");
+      print("Kapten: $_captain");
     } catch (e) {
       showAlertDialog(context, "❌ Fel vid sparande av lag!", "$e");
     }
@@ -836,11 +879,14 @@ class TeamProvider extends ChangeNotifier {
   }
 
   void markTeamAsSaved() {
-    // Markera laget som sparat vilket behövs för att uppdatera mapen när man trycker på "save team"
     _lastSavedTeam =
         _userTeam.map((skier) => Map<String, dynamic>.from(skier)).toList();
     _hasTeamChanged = false;
     notifyListeners();
+  }
+
+  bool checkIsCaptainInTeam() {
+    return _userTeam.any((skier) => skier['id'] == _captain);
   }
 
   void decreaseFreeTransfers() {

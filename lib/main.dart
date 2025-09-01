@@ -23,46 +23,54 @@ import 'screens/layout_mobile.dart';
 import 'screens/mini_league_screen.dart';
 import 'screens/rules_screen.dart';
 import 'handlers/add_skier_to_fb.dart';
+import 'handlers/test.dart';
+import 'screens/activity_log_screen.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  print("🚀 Startar appen och initierar Firebase...");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  //updateSkierPrices();
-  //clearSkiersDb();
+  print("✅ Firebase initierad");
   //addSkiersToFirestore();
-  // Försök att auto-logga in
-  User? user = FirebaseAuth.instance.currentUser;
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider<AuthenticProvider>(
-          create: (context) => AuthenticProvider(),
-        ),
-        ChangeNotifierProvider<TeamProvider>(
-          create: (context) => TeamProvider(),
-        ),
-        ChangeNotifierProvider<SkiersProvider>(
-          create: (context) => SkiersProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => AuthenticProvider()),
+        ChangeNotifierProvider(create: (_) => TeamProvider()),
+        ChangeNotifierProvider(create: (_) => SkiersProvider()),
       ],
-      child: MaterialApp(
-        title: 'Fantasy Längdskidor',
-        home: user != null ? const MyHome() : const LoginScreen(),
-      ),
+      child: MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FANTASY CROSS COUNTRY',
-      home: MyHome(),
+      title: 'Fantasy Längdskidor',
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (snapshot.hasData && snapshot.data != null) {
+            return const MyHome();
+          } else {
+            return const LoginScreen();
+          }
+        },
+      ),
     );
   }
 }
@@ -72,38 +80,47 @@ class MyHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String teamName = context.watch<TeamProvider>().teamName;
-    int gameWeek = context.watch<TeamProvider>().currentWeek;
-    DateTime? deadline = context.watch<TeamProvider>().weekDeadline;
-    String formattedDeadline = deadline != null
-        ? DateFormat('d/M, H:mm').format(deadline)
-        : "Ingen deadline";
-    bool isAdmin = context.watch<TeamProvider>().isAdmin;
+    try {
+      String? teamName = context.watch<TeamProvider>().teamName;
+      int? gameWeek = context.watch<TeamProvider>().currentWeek;
+      DateTime? deadline = context.watch<TeamProvider>().weekDeadline;
+      String formattedDeadline = deadline != null
+          ? DateFormat('d/M, H:mm').format(deadline)
+          : "Ingen deadline";
+      bool? isAdmin = context.watch<TeamProvider>().isAdmin;
 
-    final size = ScreenUtils.size(context);
+      final size = ScreenUtils.size(context);
 
-    switch (size) {
-      case ScreenSize.sm:
-        return LayoutMobile(
-          teamName: teamName,
-          gameWeek: gameWeek,
-          deadline: formattedDeadline,
-          isAdmin: isAdmin,
-        );
-      case ScreenSize.md:
-        return LayoutTablet(
-          teamName: teamName,
-          gameWeek: gameWeek,
-          deadline: formattedDeadline,
-          isAdmin: isAdmin,
-        );
-      case ScreenSize.lg:
-        return LayoutDesktop(
+      switch (size) {
+        case ScreenSize.sm:
+          return LayoutMobile(
             teamName: teamName,
             gameWeek: gameWeek,
             deadline: formattedDeadline,
-            isAdmin: isAdmin);
+            isAdmin: isAdmin,
+          );
+        case ScreenSize.md:
+          return LayoutTablet(
+            teamName: teamName,
+            gameWeek: gameWeek,
+            deadline: formattedDeadline,
+            isAdmin: isAdmin,
+          );
+        case ScreenSize.lg:
+          return LayoutDesktop(
+            teamName: teamName,
+            gameWeek: gameWeek,
+            deadline: formattedDeadline,
+            isAdmin: isAdmin,
+          );
+      }
+    } catch (e) {
+      print("❌ Fel i MyHome build: $e");
     }
+
+    return const Scaffold(
+      body: Center(child: Text("Fel vid bygg av MyHome")),
+    );
   }
 }
 
@@ -180,10 +197,6 @@ Widget skierContainer(BuildContext context, int index, double contSize,
                               offset: const Offset(0, -2),
                             ),
                           ],
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
-                          ),
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(15),
@@ -537,6 +550,7 @@ Widget saveTeam(BuildContext context) {
   DateTime? deadline = context.watch<TeamProvider>().weekDeadline;
   bool hasDeadlinePassed = false;
   bool hasTeamChanged = context.watch<TeamProvider>().hasTeamChanged;
+  bool hasCaptainChanged = context.watch<TeamProvider>().hasCaptainChanged;
 
   if (deadline != null) {
     if (deadline.isBefore(DateTime.now())) {
@@ -580,11 +594,15 @@ Widget saveTeam(BuildContext context) {
                     context, context.read<TeamProvider>());
               }
             },
-            backgroundColor: hasTeamChanged ? Colors.red : Color(0xFF1A237E),
+            backgroundColor: hasTeamChanged || hasCaptainChanged
+                ? Colors.red
+                : Color(0xFF1A237E),
             child: Text(
               "Save Team",
               style: TextStyle(
-                color: hasTeamChanged ? Colors.red : Colors.white,
+                color: hasTeamChanged || hasCaptainChanged
+                    ? Colors.red
+                    : Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
@@ -598,13 +616,8 @@ Widget logoutWidget(BuildContext context) {
   return Padding(
     padding: const EdgeInsets.all(4.0),
     child: HoverButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LoginScreen(),
-          ),
-        );
+      onPressed: () async {
+        await context.read<AuthenticProvider>().logout(context);
       },
       backgroundColor: const Color(0xFF1A237E),
       child: const Text(
@@ -703,14 +716,14 @@ Widget weekPoints(BuildContext context) {
   );
 }
 
-Widget showUpcomingEvents(BuildContext context) {
+Widget showUpcomingEvents(BuildContext context, double maxWidth) {
   List<String> upcomingEvents = context.watch<TeamProvider>().upcomingEvents;
   int currentWeek = context.watch<TeamProvider>().currentWeek;
   return Padding(
     padding: const EdgeInsets.all(8.0),
     child: Container(
       height: 200,
-      width: 300, // Fixed height for the container
+      width: maxWidth, // Fixed height for the container
       decoration: reusableBoxDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -956,6 +969,16 @@ class ThemedDrawer extends StatelessWidget {
                 onTap: () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const AdminScreen()));
+                },
+              ),
+              _divider(),
+              _drawerItem(
+                context,
+                icon: Icons.logout,
+                text: "Activity Log",
+                onTap: () {
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (_) => ActivityLogScreen()));
                 },
               ),
             ],

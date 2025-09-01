@@ -19,11 +19,10 @@ class LayoutTablet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: CompactAppBar(
         teamName: teamName,
         gameWeek: gameWeek,
         deadline: deadline,
-        backArrow: false,
       ),
       drawer: ThemedDrawer(isAdmin: isAdmin),
       body: Stack(
@@ -73,7 +72,7 @@ class LayoutTablet extends StatelessWidget {
                       const SizedBox(height: 8),
                       SizedBox(width: 150, child: saveTeam(context)),
                       const SizedBox(height: 16),
-                      showUpcomingEvents(context),
+                      showUpcomingEvents(context, 500.0),
                       const SizedBox(height: 30),
                     ],
                   ),
