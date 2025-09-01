@@ -2,8 +2,7 @@
 
 A fantasy sports app for cross-country skiing, inspired by Fantasy Premier League (FPL). Users create a team of six real-world skiers (3 men and 3 women), each with a price based on performance. With a limited budget, users must choose wisely. Points are awarded based on actual race results.
 
-This project is built as a personal portfolio/demo app to showcase full-stack mobile development using Flutter and Firebase.
-
+This project is a fully functional Flutter and Firebase mobile application designed for end users. It showcases a complete full-stack implementation with authentication, team management, and interactive features, ready for production use.
 ## Features
 
 -  Pick 3 male and 3 female skiers to form your fantasy team
@@ -113,4 +112,4 @@ To run the app locally, you'll need to set up your own Firebase project and conf
 
 ---
 
-🛠️ Feel free to check out the code or contact me if you have questions about the implementation.
+Feel free to check out the code or contact me if you have questions about the implementation.
